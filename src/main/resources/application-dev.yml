@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/equalpay_dev
+    username: postgres
+    password: postgres
+    
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    
+  h2:
+    console:
+      enabled: true
+      
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.hibernate: DEBUG
