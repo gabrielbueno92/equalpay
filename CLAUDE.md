@@ -42,14 +42,27 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 - ✅ POST /api/users (crear usuario)
 - ✅ GET /api/users (listar usuarios)
 - ✅ Todas las APIs de User y Group están implementadas
+- ✅ POST /api/expenses (crear gasto)
+- ✅ GET /api/expenses (listar gastos)
+- ✅ GET /api/expenses/group/{id} (gastos por grupo)
+- ✅ GET /api/balances/group/{id} (balance del grupo)
+- ✅ Datos de prueba automáticos al iniciar
 
 ## Roadmap Pendiente
 
-### 📋 Próximas Tareas (Semana 2-3)
-- [ ] Entidad Expense (gastos) con relaciones a User y Group
-- [ ] CRUD completo para Expense
-- [ ] Lógica para calcular balances (quién debe a quién)
-- [ ] Datos de prueba automáticos (DataLoader)
+### ✅ Completado - Semana 2-3
+- [x] Entidad Expense con relaciones a User y Group
+- [x] Entidad ExpenseSplit para divisiones detalladas
+- [x] CRUD completo para Expense con ExpenseController
+- [x] Lógica para calcular balances con BalanceService
+- [x] APIs de balances con BalanceController
+- [x] Datos de prueba automáticos (DataLoader)
+
+### 📋 Próximas Tareas (Semana 4-5)
+- [ ] Mejorar algoritmo de balances para casos complejos
+- [ ] Agregar filtros por fecha en APIs
+- [ ] Implementar notificaciones de gastos
+- [ ] Optimizar queries de base de datos
 
 ### 🔐 Autenticación (Semana 6)
 - [ ] Implementar JWT
