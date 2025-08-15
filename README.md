@@ -1,110 +1,93 @@
-# EqualPay Backend
+# EqualPay 💰
 
-App para gestionar gastos compartidos con foco en pagos justos e integración financiera.
+Una aplicación backend completa para gestión de gastos compartidos y cálculo automático de balances entre usuarios.
 
-## Tecnologías
+## 🚀 Características
 
-- **Backend**: Java 17 + Spring Boot 3.2.0
-- **Base de datos**: PostgreSQL
-- **Herramientas**: Maven, JPA/Hibernate
+- **Gestión de Usuarios**: Crear y administrar usuarios
+- **Grupos**: Organizar usuarios en grupos para gastos compartidos
+- **Gastos**: Registrar gastos con división automática (equitativa, por porcentaje, o montos exactos)
+- **Balances**: Cálculo automático de deudas y liquidaciones optimizadas
+- **APIs REST**: Endpoints completos para todas las operaciones
 
-## Estructura del Proyecto
+## 🛠️ Tecnologías
 
-```
-src/main/java/com/equalpay/
-├── EqualPayApplication.java          # Clase principal de Spring Boot
-├── config/
-│   └── SecurityConfig.java           # Configuración de seguridad
-├── controller/
-│   ├── UserController.java           # Controlador REST para usuarios
-│   └── GroupController.java          # Controlador REST para grupos
-├── dto/
-│   ├── UserDTO.java                  # DTO para transferencia de datos de usuario
-│   └── GroupDTO.java                 # DTO para transferencia de datos de grupo
-├── entity/
-│   ├── User.java                     # Entidad JPA para usuarios
-│   └── Group.java                    # Entidad JPA para grupos
-├── repository/
-│   ├── UserRepository.java           # Repositorio JPA para usuarios
-│   └── GroupRepository.java          # Repositorio JPA para grupos
-└── service/
-    ├── UserService.java              # Servicio de lógica de negocio para usuarios
-    └── GroupService.java             # Servicio de lógica de negocio para grupos
-```
+- **Java 17+** con Spring Boot 3.2.0
+- **PostgreSQL** como base de datos
+- **Spring Data JPA** para persistencia
+- **Maven** para gestión de dependencias
+- **Docker** para PostgreSQL
 
-## Prerrequisitos
+## 📋 Prerequisitos
 
-1. **Java 17** o superior
-2. **Maven 3.6** o superior
-3. **PostgreSQL 12** o superior
+- Java 17 o superior
+- Maven 3.8+
+- Docker y Docker Compose
+- Git
 
-## Configuración de la Base de Datos
+## 🏃‍♂️ Inicio Rápido
 
-### Opción 1: PostgreSQL Local
-
-1. Instala PostgreSQL en tu máquina
-2. Crea la base de datos:
-```sql
-CREATE DATABASE equalpay_dev;
-CREATE USER postgres WITH PASSWORD 'postgres';
-GRANT ALL PRIVILEGES ON DATABASE equalpay_dev TO postgres;
-```
-
-### Opción 2: Docker (Recomendado)
-
+### 1. Clonar el repositorio
 ```bash
-docker run --name equalpay-postgres \\
-  -e POSTGRES_DB=equalpay_dev \\
-  -e POSTGRES_USER=postgres \\
-  -e POSTGRES_PASSWORD=postgres \\
-  -p 5432:5432 \\
+git clone https://github.com/gabrielbueno92/equalpay.git
+cd equalpay
+```
+
+### 2. Iniciar PostgreSQL con Docker
+```bash
+docker run --name equalpay-postgres \
+  -e POSTGRES_PASSWORD=equalpay123 \
+  -e POSTGRES_DB=equalpay_dev \
+  -p 5432:5432 \
   -d postgres:13
 ```
 
-## Cómo Ejecutar el Proyecto
-
-### 1. Clonar y compilar
-```bash
-cd equalpay
-mvn clean install
-```
-
-### 2. Ejecutar en modo desarrollo
+### 3. Ejecutar la aplicación
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-### 3. Verificar que funciona
-- La aplicación estará disponible en: `http://localhost:8080`
-- Health check: `http://localhost:8080/actuator/health`
+La aplicación estará disponible en: `http://localhost:8080`
 
-## API Endpoints
+## 🗃️ Estructura del Proyecto
+
+```
+src/main/java/com/equalpay/
+├── config/           # Configuraciones (DataLoader, Security)
+├── controller/       # Controladores REST (User, Group, Expense, Balance)
+├── dto/             # DTOs para transferencia de datos
+├── entity/          # Entidades JPA (User, Group, Expense, ExpenseSplit)
+├── repository/      # Repositorios de datos con fetch joins optimizados
+├── service/         # Lógica de negocio y cálculos de balances
+└── EqualPayApplication.java
+```
+
+## 🔧 APIs Disponibles
 
 ### Usuarios
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/users` | Listar todos los usuarios |
-| GET | `/api/users/{id}` | Obtener usuario por ID |
-| GET | `/api/users/email/{email}` | Obtener usuario por email |
-| GET | `/api/users/search?name={name}` | Buscar usuarios por nombre |
-| POST | `/api/users` | Crear nuevo usuario |
-| PUT | `/api/users/{id}` | Actualizar usuario |
-| DELETE | `/api/users/{id}` | Eliminar usuario |
+- `GET /api/users` - Listar todos los usuarios
+- `POST /api/users` - Crear nuevo usuario
+- `GET /api/users/{id}` - Obtener usuario por ID
+- `PUT /api/users/{id}` - Actualizar usuario
+- `DELETE /api/users/{id}` - Eliminar usuario
 
 ### Grupos
+- `GET /api/groups` - Listar todos los grupos
+- `POST /api/groups?creatorId={id}` - Crear nuevo grupo
+- `GET /api/groups/{id}` - Obtener grupo por ID
+- `POST /api/groups/{groupId}/members/{userId}` - Agregar miembro
+- `DELETE /api/groups/{groupId}/members/{userId}` - Quitar miembro
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/groups` | Listar todos los grupos |
-| GET | `/api/groups/{id}` | Obtener grupo por ID |
-| GET | `/api/groups/search?name={name}` | Buscar grupos por nombre |
-| GET | `/api/groups/user/{userId}` | Grupos de un usuario |
-| POST | `/api/groups?creatorId={id}` | Crear nuevo grupo |
-| PUT | `/api/groups/{id}` | Actualizar grupo |
-| DELETE | `/api/groups/{id}` | Eliminar grupo |
-| POST | `/api/groups/{groupId}/members/{userId}` | Agregar miembro al grupo |
-| DELETE | `/api/groups/{groupId}/members/{userId}` | Remover miembro del grupo |
+### Gastos
+- `GET /api/expenses` - Listar todos los gastos
+- `POST /api/expenses` - Crear nuevo gasto
+- `GET /api/expenses/{id}` - Obtener gasto por ID
+- `PUT /api/expenses/{id}` - Actualizar gasto
+- `DELETE /api/expenses/{id}` - Eliminar gasto
+
+### Balances
+- `GET /api/balances/group/{groupId}` - Balance completo del grupo
+- `GET /api/balances/user/{userId}/debts` - Deudas de un usuario
 
 ## Ejemplos de Uso
 
@@ -117,32 +100,63 @@ curl -X POST http://localhost:8080/api/users \\
 
 ### Crear un grupo
 ```bash
-curl -X POST "http://localhost:8080/api/groups?creatorId=1" \\
-  -H "Content-Type: application/json" \\
-  -d '{"name": "Viaje a Bariloche", "description": "Gastos del viaje de fin de año"}'
+curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Viaje a Mendoza", "description": "Gastos del viaje"}'
 ```
 
-## Perfiles de Configuración
+### Crear un gasto
+```bash
+curl -X POST http://localhost:8080/api/expenses \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Cena en restaurante",
+    "amount": 2400.00,
+    "payerId": 1,
+    "groupId": 1,
+    "participants": [
+      {"id": 1, "name": "Juan"},
+      {"id": 2, "name": "María"}
+    ],
+    "splitType": "EQUAL",
+    "notes": "Cena de bienvenida"
+  }'
+```
 
-- **default**: Configuración de producción (PostgreSQL)
-- **dev**: Configuración de desarrollo (crea/elimina tablas automáticamente)
+### Ver balance del grupo
+```bash
+curl http://localhost:8080/api/balances/group/1
+```
 
-## Próximos Pasos
+## 🎯 Tipos de División de Gastos
 
-1. **Semana 3**: Agregar entidad `Expense` y su CRUD
-2. **Semana 4**: Implementar cálculo de balances
-3. **Semana 6**: Agregar autenticación JWT
-4. **Semana 7**: Tests unitarios e integración
+- **EQUAL**: División equitativa entre participantes
+- **PERCENTAGE**: División por porcentajes (próximamente)
+- **EXACT_AMOUNT**: Montos exactos por participante (próximamente)
 
-## Solución de Problemas
+## 🔍 Funcionalidades Avanzadas
 
-### Error de conexión a la base de datos
-- Verifica que PostgreSQL esté ejecutándose
-- Confirma las credenciales en `application-dev.yml`
+- **Lazy Loading Optimizado**: Fetch joins para evitar N+1 queries
+- **Liquidaciones Inteligentes**: Algoritmo para minimizar transacciones
+- **Validaciones**: Participantes deben ser miembros del grupo
+- **Datos de Prueba**: DataLoader automático en modo desarrollo
 
-### Puerto 8080 ocupado
-- Cambia el puerto en `application.yml`: `server.port: 8081`
+## 🤝 Contribuir
 
-### Problemas de compilación
-- Verifica Java 17: `java -version`
-- Limpia el proyecto: `mvn clean compile`
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT.
+
+## 🐛 Reportar Issues
+
+Si encuentras algún bug o tienes sugerencias, por favor crea un [issue](https://github.com/gabrielbueno92/equalpay/issues).
+
+---
+
+**Desarrollado con ❤️ usando Spring Boot**
