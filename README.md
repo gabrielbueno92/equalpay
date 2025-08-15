@@ -151,11 +151,42 @@ curl http://localhost:8080/api/balances/group/1
 
 ## 🤝 Contributing
 
+### Development Workflow
+We follow a branch-based workflow for organized development:
+
+#### Branch Naming Convention
+- `feature/feature-name` - New features (e.g., `feature/jwt-authentication`)
+- `fix/issue-description` - Bug fixes (e.g., `fix/lazy-loading-expenses`)
+- `docs/topic` - Documentation updates (e.g., `docs/api-examples`)
+- `refactor/component` - Code refactoring (e.g., `refactor/user-service`)
+- `test/component` - Test additions (e.g., `test/expense-controller`)
+
+#### Contribution Steps
 1. Fork the project
 2. Create your feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -m 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Open a Pull Request
+3. Make your changes with clear, atomic commits
+4. Write or update tests for your changes
+5. Update documentation if needed
+6. Push to your branch (`git push origin feature/new-feature`)
+7. Open a Pull Request to `main`
+
+#### Example Workflow
+```bash
+# Start new feature
+git checkout main
+git pull origin main
+git checkout -b feature/expense-categories
+
+# Work on your feature
+git add .
+git commit -m "Add category entity and repository"
+git commit -m "Implement category assignment to expenses"
+git commit -m "Add category filtering endpoints"
+
+# Push and create PR
+git push origin feature/expense-categories
+# Then create PR via GitHub UI
+```
 
 ## 📄 License
 

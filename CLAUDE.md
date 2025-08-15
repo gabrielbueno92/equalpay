@@ -74,6 +74,27 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 - [ ] Tests de integración para APIs
 - [ ] Tests de repositorio
 
+## 🌳 Workflow de Desarrollo
+
+### Branch Strategy Adoptada
+A partir de ahora utilizamos desarrollo basado en branches:
+
+- **feature/nombre**: Nuevas funcionalidades
+- **fix/descripcion**: Corrección de bugs
+- **docs/tema**: Actualizaciones de documentación
+- **refactor/componente**: Refactoring de código
+- **test/componente**: Agregado de tests
+
+### Ejemplo de Próximo Development
+```bash
+# Para JWT Authentication
+git checkout -b feature/jwt-authentication
+# ... desarrollar feature
+git commit -m "Add JWT authentication with Spring Security"
+git push origin feature/jwt-authentication
+# Create PR to main
+```
+
 ## Estructura del Código
 
 ```
