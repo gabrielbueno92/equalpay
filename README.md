@@ -1,162 +1,170 @@
 # EqualPay 💰
 
-Una aplicación backend completa para gestión de gastos compartidos y cálculo automático de balances entre usuarios.
+A complete backend application for shared expense management and automatic balance calculation between users.
 
-## 🚀 Características
+## 🚀 Features
 
-- **Gestión de Usuarios**: Crear y administrar usuarios
-- **Grupos**: Organizar usuarios en grupos para gastos compartidos
-- **Gastos**: Registrar gastos con división automática (equitativa, por porcentaje, o montos exactos)
-- **Balances**: Cálculo automático de deudas y liquidaciones optimizadas
-- **APIs REST**: Endpoints completos para todas las operaciones
+- **User Management**: Create and manage users
+- **Groups**: Organize users into groups for shared expenses
+- **Expenses**: Record expenses with automatic splitting (equal, percentage, or exact amounts)
+- **Balances**: Automatic debt calculation and optimized settlements
+- **REST APIs**: Complete endpoints for all operations
 
-## 🛠️ Tecnologías
+## 🛠️ Technologies
 
-- **Java 17+** con Spring Boot 3.2.0
-- **PostgreSQL** como base de datos
-- **Spring Data JPA** para persistencia
-- **Maven** para gestión de dependencias
-- **Docker** para PostgreSQL
+- **Java 17+** with Spring Boot 3.2.0
+- **PostgreSQL** as database
+- **Spring Data JPA** for persistence
+- **Maven** for dependency management
+- **Docker** for PostgreSQL
 
-## 📋 Prerequisitos
+## 📋 Prerequisites
 
-- Java 17 o superior
+- Java 17 or higher
 - Maven 3.8+
-- Docker y Docker Compose
+- Docker and Docker Compose
 - Git
 
-## 🏃‍♂️ Inicio Rápido
+## 🏃‍♂️ Quick Start
 
-### 1. Clonar el repositorio
+### 1. Clone the repository
 ```bash
 git clone https://github.com/gabrielbueno92/equalpay.git
 cd equalpay
 ```
 
-### 2. Iniciar PostgreSQL con Docker
+### 2. Start PostgreSQL with Docker
 ```bash
 docker run --name equalpay-postgres \
-  -e POSTGRES_PASSWORD=equalpay123 \
+  -e POSTGRES_PASSWORD=your_secure_password \
   -e POSTGRES_DB=equalpay_dev \
   -p 5432:5432 \
   -d postgres:13
 ```
 
-### 3. Ejecutar la aplicación
+### 3. Update database configuration
+Update the password in `src/main/resources/application-dev.yml`:
+```yaml
+spring:
+  datasource:
+    password: your_secure_password  # Replace with your actual password
+```
+
+### 4. Run the application
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-La aplicación estará disponible en: `http://localhost:8080`
+The application will be available at: `http://localhost:8080`
 
-## 🗃️ Estructura del Proyecto
+## 🗃️ Project Structure
 
 ```
 src/main/java/com/equalpay/
-├── config/           # Configuraciones (DataLoader, Security)
-├── controller/       # Controladores REST (User, Group, Expense, Balance)
-├── dto/             # DTOs para transferencia de datos
-├── entity/          # Entidades JPA (User, Group, Expense, ExpenseSplit)
-├── repository/      # Repositorios de datos con fetch joins optimizados
-├── service/         # Lógica de negocio y cálculos de balances
+├── config/           # Configurations (DataLoader, Security)
+├── controller/       # REST Controllers (User, Group, Expense, Balance)
+├── dto/             # DTOs for data transfer
+├── entity/          # JPA Entities (User, Group, Expense, ExpenseSplit)
+├── repository/      # Data repositories with optimized fetch joins
+├── service/         # Business logic and balance calculations
 └── EqualPayApplication.java
 ```
 
-## 🔧 APIs Disponibles
+## 🔧 Available APIs
 
-### Usuarios
-- `GET /api/users` - Listar todos los usuarios
-- `POST /api/users` - Crear nuevo usuario
-- `GET /api/users/{id}` - Obtener usuario por ID
-- `PUT /api/users/{id}` - Actualizar usuario
-- `DELETE /api/users/{id}` - Eliminar usuario
+### Users
+- `GET /api/users` - List all users
+- `POST /api/users` - Create new user
+- `GET /api/users/{id}` - Get user by ID
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
 
-### Grupos
-- `GET /api/groups` - Listar todos los grupos
-- `POST /api/groups?creatorId={id}` - Crear nuevo grupo
-- `GET /api/groups/{id}` - Obtener grupo por ID
-- `POST /api/groups/{groupId}/members/{userId}` - Agregar miembro
-- `DELETE /api/groups/{groupId}/members/{userId}` - Quitar miembro
+### Groups
+- `GET /api/groups` - List all groups
+- `POST /api/groups?creatorId={id}` - Create new group
+- `GET /api/groups/{id}` - Get group by ID
+- `POST /api/groups/{groupId}/members/{userId}` - Add member
+- `DELETE /api/groups/{groupId}/members/{userId}` - Remove member
 
-### Gastos
-- `GET /api/expenses` - Listar todos los gastos
-- `POST /api/expenses` - Crear nuevo gasto
-- `GET /api/expenses/{id}` - Obtener gasto por ID
-- `PUT /api/expenses/{id}` - Actualizar gasto
-- `DELETE /api/expenses/{id}` - Eliminar gasto
+### Expenses
+- `GET /api/expenses` - List all expenses
+- `POST /api/expenses` - Create new expense
+- `GET /api/expenses/{id}` - Get expense by ID
+- `PUT /api/expenses/{id}` - Update expense
+- `DELETE /api/expenses/{id}` - Delete expense
 
 ### Balances
-- `GET /api/balances/group/{groupId}` - Balance completo del grupo
-- `GET /api/balances/user/{userId}/debts` - Deudas de un usuario
+- `GET /api/balances/group/{groupId}` - Complete group balance
+- `GET /api/balances/user/{userId}/debts` - User debts
 
-## Ejemplos de Uso
+## 📝 Usage Examples
 
-### Crear un usuario
+### Create a user
 ```bash
 curl -X POST http://localhost:8080/api/users \\
   -H "Content-Type: application/json" \\
-  -d '{"name": "Juan Pérez", "email": "juan@email.com"}'
+  -d '{"name": "John Doe", "email": "john@email.com"}'
 ```
 
-### Crear un grupo
+### Create a group
 ```bash
 curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Viaje a Mendoza", "description": "Gastos del viaje"}'
+  -d '{"name": "Trip to Paris", "description": "Travel expenses"}'
 ```
 
-### Crear un gasto
+### Create an expense
 ```bash
 curl -X POST http://localhost:8080/api/expenses \
   -H "Content-Type: application/json" \
   -d '{
-    "description": "Cena en restaurante",
-    "amount": 2400.00,
+    "description": "Dinner at restaurant",
+    "amount": 120.00,
     "payerId": 1,
     "groupId": 1,
     "participants": [
-      {"id": 1, "name": "Juan"},
-      {"id": 2, "name": "María"}
+      {"id": 1, "name": "John"},
+      {"id": 2, "name": "Alice"}
     ],
     "splitType": "EQUAL",
-    "notes": "Cena de bienvenida"
+    "notes": "Welcome dinner"
   }'
 ```
 
-### Ver balance del grupo
+### View group balance
 ```bash
 curl http://localhost:8080/api/balances/group/1
 ```
 
-## 🎯 Tipos de División de Gastos
+## 🎯 Expense Split Types
 
-- **EQUAL**: División equitativa entre participantes
-- **PERCENTAGE**: División por porcentajes (próximamente)
-- **EXACT_AMOUNT**: Montos exactos por participante (próximamente)
+- **EQUAL**: Equal division among participants
+- **PERCENTAGE**: Division by percentages (coming soon)
+- **EXACT_AMOUNT**: Exact amounts per participant (coming soon)
 
-## 🔍 Funcionalidades Avanzadas
+## 🔍 Advanced Features
 
-- **Lazy Loading Optimizado**: Fetch joins para evitar N+1 queries
-- **Liquidaciones Inteligentes**: Algoritmo para minimizar transacciones
-- **Validaciones**: Participantes deben ser miembros del grupo
-- **Datos de Prueba**: DataLoader automático en modo desarrollo
+- **Optimized Lazy Loading**: Fetch joins to avoid N+1 queries
+- **Smart Settlements**: Algorithm to minimize transactions
+- **Validations**: Participants must be group members
+- **Test Data**: Automatic DataLoader in development mode
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -m 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está bajo la Licencia MIT.
+This project is under the MIT License.
 
-## 🐛 Reportar Issues
+## 🐛 Report Issues
 
-Si encuentras algún bug o tienes sugerencias, por favor crea un [issue](https://github.com/gabrielbueno92/equalpay/issues).
+If you find any bugs or have suggestions, please create an [issue](https://github.com/gabrielbueno92/equalpay/issues).
 
 ---
 
-**Desarrollado con ❤️ usando Spring Boot**
+**Built with ❤️ using Spring Boot**
