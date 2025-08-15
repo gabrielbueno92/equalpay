@@ -35,13 +35,35 @@ public class DataLoader implements CommandLineRunner {
         if (userRepository.count() == 0) {
             System.out.println("🔄 DataLoader iniciado - cargando datos de prueba...");
             try {
-                loadSampleData();
+                // Comentado temporalmente para evitar problemas de cascading
+                loadUsersAndGroupsOnly();
             } catch (Exception e) {
                 System.err.println("❌ Error en DataLoader: " + e.getMessage());
                 e.printStackTrace();
                 // No re-lanzar la excepción para que la app no se cierre
             }
         }
+    }
+
+    private void loadUsersAndGroupsOnly() {
+        System.out.println("🔄 Cargando solo usuarios y grupos...");
+
+        // Crear usuarios
+        User alice = createUser("Alice Johnson", "alice@email.com");
+        User bob = createUser("Bob Smith", "bob@email.com");
+        User charlie = createUser("Charlie Brown", "charlie@email.com");
+        User diana = createUser("Diana Prince", "diana@email.com");
+
+        // Crear grupos usando IDs para evitar problemas de detached entities
+        createGroupWithMembers("Viaje a Bariloche", "Gastos del viaje de fin de año", 
+                               alice.getId(), alice.getId(), bob.getId(), charlie.getId(), diana.getId());
+        createGroupWithMembers("Departamento Compartido", "Gastos del departamento", 
+                               bob.getId(), bob.getId(), charlie.getId(), diana.getId());
+
+        System.out.println("✅ Datos básicos cargados exitosamente!");
+        System.out.println("📊 Usuarios creados: 4");
+        System.out.println("👥 Grupos creados: 2");
+        System.out.println("💰 Para crear gastos, usar las APIs manualmente");
     }
 
     private void loadSampleData() {
@@ -114,13 +136,40 @@ public class DataLoader implements CommandLineRunner {
     }
 
     private Group createGroup(String name, String description, User creator) {
-        Group group = new Group(name, description, creator);
+        // Obtener usuario fresco de la base de datos para evitar detached entity
+        User managedCreator = userRepository.findById(creator.getId()).orElse(creator);
+        Group group = new Group(name, description, managedCreator);
         return groupRepository.save(group);
+    }
+
+    private void createGroupWithMembers(String name, String description, Long creatorId, Long... memberIds) {
+        // Obtener todos los usuarios por ID para evitar detached entities
+        User creator = userRepository.findById(creatorId).orElseThrow();
+        
+        // Crear grupo sin usar el constructor problemático
+        Group group = new Group();
+        group.setName(name);
+        group.setDescription(description);
+        group.setCreator(creator);
+        
+        // Guardar grupo primero
+        Group savedGroup = groupRepository.save(group);
+        
+        // Luego agregar miembros usando sus IDs
+        for (Long memberId : memberIds) {
+            User member = userRepository.findById(memberId).orElseThrow();
+            savedGroup.getMembers().add(member);
+        }
+        
+        // Guardar grupo con miembros
+        groupRepository.save(savedGroup);
     }
 
     private void addMembersToGroup(Group group, User... users) {
         for (User user : users) {
-            group.addMember(user);
+            // Obtener usuario fresco de la base de datos para evitar detached entity
+            User managedUser = userRepository.findById(user.getId()).orElse(user);
+            group.getMembers().add(managedUser);
         }
         groupRepository.save(group);
     }

@@ -1,8 +1,8 @@
 package com.equalpay.service;
 
 import com.equalpay.dto.ExpenseDTO;
-import com.equalpay.dto.ExpenseSplitDTO;
 import com.equalpay.dto.GroupDTO;
+import com.equalpay.dto.SplitDTO;
 import com.equalpay.dto.UserDTO;
 import com.equalpay.entity.Expense;
 import com.equalpay.entity.ExpenseSplit;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -40,14 +41,14 @@ public class ExpenseService {
     private GroupRepository groupRepository;
 
     public List<ExpenseDTO> getAllExpenses() {
-        return expenseRepository.findAll()
+        return expenseRepository.findAllWithDetails()
                 .stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public Optional<ExpenseDTO> getExpenseById(Long id) {
-        return expenseRepository.findById(id)
+        return expenseRepository.findByIdWithDetails(id)
                 .map(this::convertToDTO);
     }
 
@@ -106,11 +107,12 @@ public class ExpenseService {
             expense.setExpenseDate(expenseDTO.getExpenseDate());
         }
 
-        // Agregar participantes
-        if (expenseDTO.getParticipantIds() != null && !expenseDTO.getParticipantIds().isEmpty()) {
-            Set<User> participants = expenseDTO.getParticipantIds().stream()
-                    .map(id -> userRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("Participante con ID " + id + " no encontrado")))
+        // Agregar participantes (usando IDs de la lista de participants si está disponible)
+        Set<User> participants = new HashSet<>();
+        if (expenseDTO.getParticipants() != null && !expenseDTO.getParticipants().isEmpty()) {
+            participants = expenseDTO.getParticipants().stream()
+                    .map(userDTO -> userRepository.findById(userDTO.getId())
+                            .orElseThrow(() -> new IllegalArgumentException("Participante con ID " + userDTO.getId() + " no encontrado")))
                     .collect(Collectors.toSet());
             
             // Validar que todos los participantes son miembros del grupo
@@ -150,10 +152,10 @@ public class ExpenseService {
         }
 
         // Actualizar participantes si se especifican
-        if (expenseDTO.getParticipantIds() != null) {
-            Set<User> participants = expenseDTO.getParticipantIds().stream()
-                    .map(participantId -> userRepository.findById(participantId)
-                            .orElseThrow(() -> new IllegalArgumentException("Participante con ID " + participantId + " no encontrado")))
+        if (expenseDTO.getParticipants() != null) {
+            Set<User> participants = expenseDTO.getParticipants().stream()
+                    .map(userDTO -> userRepository.findById(userDTO.getId())
+                            .orElseThrow(() -> new IllegalArgumentException("Participante con ID " + userDTO.getId() + " no encontrado")))
                     .collect(Collectors.toSet());
             
             expense.setParticipants(participants);
@@ -291,29 +293,17 @@ public class ExpenseService {
             dto.setParticipants(participantsDTO);
         }
 
-        // Convertir divisiones
-        if (expense.getExpenseSplits() != null) {
-            List<ExpenseSplitDTO> splitsDTO = expense.getExpenseSplits().stream()
-                    .map(split -> {
-                        UserDTO userDTO = new UserDTO(
-                            split.getUser().getId(),
-                            split.getUser().getName(),
-                            split.getUser().getEmail(),
-                            split.getUser().getCreatedAt(),
-                            split.getUser().getUpdatedAt()
-                        );
-                        
-                        return new ExpenseSplitDTO(
-                            split.getId(),
-                            split.getAmountOwed(),
-                            split.getPercentage(),
-                            expense.getId(),
-                            expense.getDescription(),
-                            userDTO
-                        );
-                    })
+        // Convertir divisiones (simplificado)
+        if (expense.getExpenseSplits() != null && !expense.getExpenseSplits().isEmpty()) {
+            List<SplitDTO> splitsDTO = expense.getExpenseSplits().stream()
+                    .map(split -> new SplitDTO(
+                        split.getUser().getId(),
+                        split.getUser().getName(),
+                        split.getAmountOwed(),
+                        split.getPercentage()
+                    ))
                     .collect(Collectors.toList());
-            dto.setExpenseSplits(splitsDTO);
+            dto.setSplits(splitsDTO);
         }
 
         return dto;

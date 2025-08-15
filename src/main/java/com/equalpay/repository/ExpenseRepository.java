@@ -9,12 +9,21 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
-    // Gastos por grupo
-    @Query("SELECT e FROM Expense e WHERE e.group.id = :groupId ORDER BY e.expenseDate DESC")
+    // Buscar todos los gastos con fetch joins para evitar lazy loading
+    @Query("SELECT DISTINCT e FROM Expense e LEFT JOIN FETCH e.group LEFT JOIN FETCH e.payer LEFT JOIN FETCH e.participants LEFT JOIN FETCH e.expenseSplits es LEFT JOIN FETCH es.user ORDER BY e.expenseDate DESC")
+    List<Expense> findAllWithDetails();
+
+    // Buscar gasto por ID con fetch joins
+    @Query("SELECT e FROM Expense e LEFT JOIN FETCH e.group LEFT JOIN FETCH e.payer LEFT JOIN FETCH e.participants LEFT JOIN FETCH e.expenseSplits es LEFT JOIN FETCH es.user WHERE e.id = :id")
+    Optional<Expense> findByIdWithDetails(@Param("id") Long id);
+
+    // Gastos por grupo con fetch joins para evitar lazy loading
+    @Query("SELECT e FROM Expense e LEFT JOIN FETCH e.group LEFT JOIN FETCH e.payer LEFT JOIN FETCH e.participants LEFT JOIN FETCH e.expenseSplits es LEFT JOIN FETCH es.user WHERE e.group.id = :groupId ORDER BY e.expenseDate DESC")
     List<Expense> findByGroupId(@Param("groupId") Long groupId);
 
     // Gastos donde el usuario es el pagador

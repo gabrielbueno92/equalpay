@@ -117,4 +117,37 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
 - Usuario familiarizado con setup completo
 - Docker instalado y funcionando
 - Backend corriendo correctamente
-- Listo para continuar con entidad Expense y cálculo de balances
+- ✅ Entidades Expense y ExpenseSplit implementadas
+- ✅ Sistema de balances funcional
+- ✅ APIs probadas manualmente por el usuario
+
+### 🐛 Issues Identificados en Testing Manual
+**Problemas en ExpenseDTO (POST /api/expenses response):**
+1. `splitType` funciona correctamente (EQUAL/PERCENTAGE/EXACT_AMOUNT)
+2. Campos `group` aparecen como null (deberían tener info del grupo)
+3. Campo `expenseSplits` está vacío (deberían cargar las divisiones automáticas)
+
+**Problemas en diseño de DTOs (GET /api/expenses):**
+1. `participantIds` vacío pero `participants` lleno (redundancia)
+2. Datos del usuario duplicados en `expenseSplits` y `participants`
+3. Propuesta: Separar claramente participants vs splits para mayor claridad
+
+### ✅ Fixes Completados
+- [x] Arreglar carga lazy de `group` en ExpenseDTO (fetch joins implementados)
+- [x] Arreglar carga lazy de `expenseSplits` en ExpenseDTO (fetch joins implementados)
+- [x] Mejorar diseño de DTOs para eliminar redundancia
+- [x] Separar `participants` vs `splits` en responses (nuevo SplitDTO creado)
+
+### 📋 TODOs Pendientes para Próxima Sesión
+- [ ] Probar todas las APIs con los nuevos fixes implementados
+- [ ] Verificar que group y splits cargan correctamente en responses
+- [ ] Probar creación de gastos con nuevo formato de DTOs
+- [ ] Probar cálculos de balances completos
+- [ ] Hacer commit final con todos los fixes
+
+### 🔧 Cambios Técnicos Realizados
+- Agregado fetch joins en ExpenseRepository para evitar lazy loading
+- Creado SplitDTO simplificado (userId, userName, amountOwed)
+- Eliminado participantIds redundante del ExpenseDTO
+- Simplificado DataLoader para evitar problemas de cascading
+- Actualizado ExpenseService para usar nuevos métodos con fetch joins

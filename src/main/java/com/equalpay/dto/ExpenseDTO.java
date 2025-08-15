@@ -37,12 +37,11 @@ public class ExpenseDTO {
     private Long groupId;
     private GroupDTO group;
 
-    // Participantes
-    private List<Long> participantIds;
+    // Participantes (todos los que están en el gasto)
     private List<UserDTO> participants;
 
-    // Divisiones detalladas
-    private List<ExpenseSplitDTO> expenseSplits;
+    // Divisiones (quién debe cuánto - puede ser subconjunto de participants)
+    private List<SplitDTO> splits;
 
     // Campos calculados
     private BigDecimal amountPerParticipant;
@@ -163,13 +162,6 @@ public class ExpenseDTO {
         this.groupId = group != null ? group.getId() : null;
     }
 
-    public List<Long> getParticipantIds() {
-        return participantIds;
-    }
-
-    public void setParticipantIds(List<Long> participantIds) {
-        this.participantIds = participantIds;
-    }
 
     public List<UserDTO> getParticipants() {
         return participants;
@@ -189,12 +181,12 @@ public class ExpenseDTO {
         }
     }
 
-    public List<ExpenseSplitDTO> getExpenseSplits() {
-        return expenseSplits;
+    public List<SplitDTO> getSplits() {
+        return splits;
     }
 
-    public void setExpenseSplits(List<ExpenseSplitDTO> expenseSplits) {
-        this.expenseSplits = expenseSplits;
+    public void setSplits(List<SplitDTO> splits) {
+        this.splits = splits;
     }
 
     public BigDecimal getAmountPerParticipant() {
