@@ -190,7 +190,15 @@ git push origin feature/expense-categories
 
 ## 📄 License
 
-This project is under the MIT License.
+This project is licensed under the Business Source License 1.1 (BSL).
+
+- **Non-commercial use**: Free to use, modify, and distribute
+- **Commercial use**: Requires commercial license for competing services
+- **Future**: Becomes MIT License on 2029-01-01
+
+For commercial licensing inquiries, please contact: gabriel@equalpay.com
+
+See [LICENSE](LICENSE) file for full terms.
 
 ## 🐛 Report Issues
 

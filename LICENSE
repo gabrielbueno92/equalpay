@@ -1,0 +1,31 @@
+Business Source License 1.1
+
+License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
+"Business Source License" is a trademark of MariaDB Corporation Ab.
+
+Parameters
+
+Licensor:             Gabriel Bueno
+Licensed Work:        EqualPay
+                      The Licensed Work is (c) 2025 Gabriel Bueno
+Additional Use Grant: You may make use of the Licensed Work provided that you do not use
+                      the Licensed Work for a Competing Use.
+
+                      A "Competing Use" means use of the Licensed Work in a commercial
+                      expense sharing or bill splitting service that competes with
+                      EqualPay's commercial offerings.
+
+Change Date:          2029-01-01
+
+Change License:       MIT License
+
+For information about alternative licensing arrangements for the Software,
+please visit: https://github.com/gabrielbueno92/equalpay
+
+Notice
+
+The Business Source License (this document, or the "License") is not an Open
+Source license. However, the Licensed Work will eventually be made available
+under an Open Source License, as stated in this License.
+
+License text available at https://mariadb.com/bsl11/
