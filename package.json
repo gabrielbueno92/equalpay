@@ -1,0 +1,30 @@
+{
+  "name": "equalpay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modern expense sharing application with premium features",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd apps/backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd apps/frontend && npm run build",
+    "build:backend": "cd apps/backend && mvn clean package",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd apps/frontend && npm run test",
+    "test:backend": "cd apps/backend && mvn test",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}
