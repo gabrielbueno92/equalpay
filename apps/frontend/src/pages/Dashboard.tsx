@@ -1,28 +1,40 @@
+import { 
+  CreditCardIcon, 
+  UserGroupIcon, 
+  ScaleIcon,
+  PlusIcon,
+  DocumentArrowDownIcon,
+  SparklesIcon,
+  FireIcon,
+  ChartBarIcon,
+  BanknotesIcon
+} from '@heroicons/react/24/outline'
+
 export default function Dashboard() {
   const stats = [
     { 
       name: 'Total Spent', 
       value: '$2,847.30', 
-      change: '+12.5%',
+      change: '+12.5% vs last month',
       trend: 'up',
       color: 'from-blue-500 to-cyan-500',
-      icon: '💳'
+      icon: CreditCardIcon
     },
     { 
       name: 'Active Groups', 
       value: '4', 
-      change: '+1',
+      change: '+1 vs last month',
       trend: 'up',
       color: 'from-purple-500 to-pink-500',
-      icon: '👥'
+      icon: UserGroupIcon
     },
     { 
       name: 'Net Balance', 
       value: '-$156.80', 
-      change: '-$23.40',
+      change: '-$23.40 vs last month',
       trend: 'down',
       color: 'from-emerald-500 to-teal-500',
-      icon: '⚖️'
+      icon: ScaleIcon
     },
   ]
 
@@ -66,10 +78,10 @@ export default function Dashboard() {
   ]
 
   const quickActions = [
-    { name: 'Add Expense', icon: '➕', color: 'from-blue-500 to-purple-600' },
-    { name: 'Create Group', icon: '👥', color: 'from-purple-500 to-pink-500' },
-    { name: 'Settle Up', icon: '💰', color: 'from-emerald-500 to-cyan-500' },
-    { name: 'Analytics', icon: '📊', color: 'from-orange-500 to-red-500' },
+    { name: 'Add Expense', icon: PlusIcon, color: 'from-blue-500 to-purple-600' },
+    { name: 'Create Group', icon: UserGroupIcon, color: 'from-purple-500 to-pink-500' },
+    { name: 'Settle Up', icon: BanknotesIcon, color: 'from-emerald-500 to-cyan-500' },
+    { name: 'Analytics', icon: ChartBarIcon, color: 'from-orange-500 to-red-500' },
   ]
 
   return (
@@ -85,11 +97,13 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all">
-            Export Data
+          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2">
+            <DocumentArrowDownIcon className="h-5 w-5" />
+            <span>Export Data</span>
           </button>
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg">
-            + Add Expense
+          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2">
+            <PlusIcon className="h-5 w-5" />
+            <span>Add Expense</span>
           </button>
         </div>
       </div>
@@ -102,7 +116,7 @@ export default function Dashboard() {
             <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
               <div className="flex items-start justify-between mb-4">
                 <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                  <span className="text-xl">{stat.icon}</span>
+                  <stat.icon className="h-6 w-6 text-white" />
                 </div>
                 <div className={`px-2 py-1 rounded-full text-xs font-medium ${
                   stat.trend === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
@@ -125,7 +139,7 @@ export default function Dashboard() {
           <button key={action.name} className="group relative">
             <div className={`absolute inset-0 bg-gradient-to-r ${action.color} opacity-75 rounded-xl blur-sm group-hover:blur-none transition-all`}></div>
             <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all text-center">
-              <div className="text-2xl mb-2">{action.icon}</div>
+              <action.icon className="h-6 w-6 text-white mx-auto mb-2" />
               <div className="text-white font-medium text-sm">{action.name}</div>
             </div>
           </button>
@@ -193,18 +207,26 @@ export default function Dashboard() {
 
           {/* Top Groups */}
           <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-white mb-4">Most Active</h3>
+            <h3 className="text-lg font-bold text-white mb-4">Your Active Groups</h3>
             <div className="space-y-3">
-              {['Weekend Trip', 'Roommates', 'Work Team'].map((group, index) => (
-                <div key={group} className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    index === 0 ? 'bg-gradient-to-r from-blue-500 to-purple-500' :
-                    index === 1 ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
-                    'bg-gradient-to-r from-emerald-500 to-cyan-500'
-                  }`}>
-                    <span className="text-sm">👥</span>
+              {[
+                { name: 'Weekend Trip', icon: 'airplane', activity: '5 expenses today', color: 'from-blue-500 to-cyan-500' },
+                { name: 'Roommates', icon: 'home', activity: '2 expenses this week', color: 'from-purple-500 to-pink-500' },
+                { name: 'Work Team', icon: 'utensils', activity: '1 expense yesterday', color: 'from-emerald-500 to-teal-500' }
+              ].map((group, index) => (
+                <div key={group.name} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-r ${group.color}`}>
+                      {group.icon === 'airplane' && <span className="text-sm">✈️</span>}
+                      {group.icon === 'home' && <span className="text-sm">🏠</span>}
+                      {group.icon === 'utensils' && <span className="text-sm">🍽️</span>}
+                    </div>
+                    <div>
+                      <div className="text-white font-medium text-sm">{group.name}</div>
+                      <div className="text-gray-400 text-xs">{group.activity}</div>
+                    </div>
                   </div>
-                  <span className="text-white font-medium">{group}</span>
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
                 </div>
               ))}
             </div>

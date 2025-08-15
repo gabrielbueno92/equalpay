@@ -1,7 +1,20 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { 
+  HomeIcon, 
+  UserGroupIcon, 
+  CreditCardIcon, 
+  ScaleIcon,
+  SparklesIcon,
+  ArrowRightOnRectangleIcon
+} from '@heroicons/react/24/outline'
 import Dashboard from './pages/Dashboard'
 import Groups from './pages/Groups'
+import Expenses from './pages/Expenses'
+import Balances from './pages/Balances'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import AuthModal from './components/AuthModal'
+import { useLogout } from './hooks/useApi'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,13 +27,19 @@ const queryClient = new QueryClient({
 
 function Navigation() {
   const location = useLocation()
+  const { user } = useAuth()
+  const logoutMutation = useLogout()
   
   const navItems = [
-    { name: 'Dashboard', path: '/', icon: '📊' },
-    { name: 'Groups', path: '/groups', icon: '👥' },
-    { name: 'Expenses', path: '/expenses', icon: '💰' },
-    { name: 'Balances', path: '/balances', icon: '⚖️' },
+    { name: 'Dashboard', path: '/', icon: HomeIcon },
+    { name: 'Groups', path: '/groups', icon: UserGroupIcon },
+    { name: 'Expenses', path: '/expenses', icon: CreditCardIcon },
+    { name: 'Balances', path: '/balances', icon: ScaleIcon },
   ]
+
+  const handleLogout = () => {
+    logoutMutation.mutate()
+  }
 
   return (
     <nav className="relative">
@@ -31,14 +50,27 @@ function Navigation() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-xl">💎</span>
+              <SparklesIcon className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-2xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               EqualPay
             </h1>
           </div>
           
-          <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full shadow-lg"></div>
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full shadow-lg flex items-center justify-center">
+              <span className="text-white text-sm font-bold">
+                {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+              </span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-1 hover:bg-white/10 rounded-lg transition-all text-gray-400 hover:text-white"
+              title="Logout"
+            >
+              <ArrowRightOnRectangleIcon className="h-4 w-4" />
+            </button>
+          </div>
         </div>
         
         <div className="space-y-2">
@@ -56,7 +88,7 @@ function Navigation() {
                   }
                 `}
               >
-                <span className="text-lg">{item.icon}</span>
+                <item.icon className="h-5 w-5" />
                 <span className="font-medium">{item.name}</span>
                 {isActive && (
                   <div className="ml-auto w-2 h-2 bg-white rounded-full shadow-lg"></div>
@@ -78,30 +110,61 @@ function Navigation() {
   )
 }
 
+function AppContent() {
+  const { isAuthenticated, isLoading, showAuthModal, setShowAuthModal } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg mx-auto mb-4">
+            <SparklesIcon className="h-8 w-8 text-white animate-pulse" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">EqualPay</h1>
+          <p className="text-gray-400">Loading your account...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="min-h-screen flex">
+        {/* Sidebar */}
+        <div className="w-80 min-h-screen p-6">
+          <Navigation />
+        </div>
+        
+        {/* Main Content */}
+        <div className="flex-1 min-h-screen">
+          <main className="p-8">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/groups" element={<Groups />} />
+              <Route path="/expenses" element={<Expenses />} />
+              <Route path="/balances" element={<Balances />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => setShowAuthModal(false)}
+      />
+    </>
+  )
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="min-h-screen">
-          <div className="flex">
-            {/* Sidebar */}
-            <div className="w-80 min-h-screen p-6">
-              <Navigation />
-            </div>
-            
-            {/* Main Content */}
-            <div className="flex-1 min-h-screen">
-              <main className="p-8">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/groups" element={<Groups />} />
-                  <Route path="/expenses" element={<div className="text-white">Expenses coming soon...</div>} />
-                  <Route path="/balances" element={<div className="text-white">Balances coming soon...</div>} />
-                </Routes>
-              </main>
-            </div>
-          </div>
-        </div>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </Router>
     </QueryClientProvider>
   )

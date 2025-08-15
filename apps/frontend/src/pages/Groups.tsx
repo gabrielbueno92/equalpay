@@ -1,3 +1,11 @@
+import { 
+  UserGroupIcon,
+  PlusIcon,
+  CogIcon,
+  HomeIcon,
+  MusicalNoteIcon
+} from '@heroicons/react/24/outline'
+
 export default function Groups() {
   const groups = [
     { 
@@ -8,7 +16,7 @@ export default function Groups() {
       totalExpenses: 847.30, 
       yourBalance: -45.20,
       lastActivity: '2h ago',
-      avatar: '✈️',
+      avatar: () => <span className="text-xl">✈️</span>,
       color: 'from-blue-500 to-cyan-500',
       members: ['You', 'Maria', 'Alex', 'John'],
       recentExpense: 'Hotel Room - $127.80'
@@ -21,7 +29,7 @@ export default function Groups() {
       totalExpenses: 1247.80, 
       yourBalance: 23.50,
       lastActivity: '1d ago',
-      avatar: '🏠',
+      avatar: HomeIcon,
       color: 'from-purple-500 to-pink-500',
       members: ['You', 'Sarah', 'Mike'],
       recentExpense: 'Groceries - $89.50'
@@ -34,7 +42,7 @@ export default function Groups() {
       totalExpenses: 324.60, 
       yourBalance: -8.40,
       lastActivity: '3d ago',
-      avatar: '🍽️',
+      avatar: () => <span className="text-xl">🍽️</span>,
       color: 'from-emerald-500 to-teal-500',
       members: ['You', 'Emma', 'David', 'Lisa', '+4 more'],
       recentExpense: 'Thai Restaurant - $95.20'
@@ -47,7 +55,7 @@ export default function Groups() {
       totalExpenses: 156.40, 
       yourBalance: 12.80,
       lastActivity: '5d ago',
-      avatar: '💪',
+      avatar: () => <span className="text-xl">🏃‍♂️</span>,
       color: 'from-orange-500 to-red-500',
       members: ['You', 'Jake', 'Anna', 'Tom', 'Mia'],
       recentExpense: 'Protein Powder - $67.99'
@@ -55,10 +63,10 @@ export default function Groups() {
   ]
 
   const groupCategories = [
-    { name: 'Travel', count: 2, icon: '✈️', color: 'from-blue-500 to-cyan-500' },
-    { name: 'Living', count: 1, icon: '🏠', color: 'from-purple-500 to-pink-500' },
-    { name: 'Food', count: 1, icon: '🍽️', color: 'from-emerald-500 to-teal-500' },
-    { name: 'Fitness', count: 1, icon: '💪', color: 'from-orange-500 to-red-500' },
+    { name: 'Travel', count: 2, icon: () => <span className="text-xl">✈️</span>, color: 'from-blue-500 to-cyan-500' },
+    { name: 'Living', count: 1, icon: HomeIcon, color: 'from-purple-500 to-pink-500' },
+    { name: 'Food', count: 1, icon: () => <span className="text-xl">🍽️</span>, color: 'from-emerald-500 to-teal-500' },
+    { name: 'Entertainment', count: 1, icon: MusicalNoteIcon, color: 'from-orange-500 to-red-500' },
   ]
 
   return (
@@ -74,11 +82,13 @@ export default function Groups() {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all">
-            Group Settings
+          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2">
+            <CogIcon className="h-5 w-5" />
+            <span>Group Settings</span>
           </button>
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg">
-            + Create Group
+          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2">
+            <PlusIcon className="h-5 w-5" />
+            <span>Create Group</span>
           </button>
         </div>
       </div>
@@ -89,7 +99,13 @@ export default function Groups() {
           <div key={category.name} className="relative group cursor-pointer">
             <div className={`absolute inset-0 bg-gradient-to-r ${category.color} opacity-75 rounded-xl blur-sm group-hover:blur-none transition-all`}></div>
             <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all text-center">
-              <div className="text-2xl mb-2">{category.icon}</div>
+              <div className="mx-auto mb-2 flex justify-center">
+                {typeof category.icon === 'function' ? (
+                  <category.icon />
+                ) : (
+                  <category.icon className="h-6 w-6 text-white" />
+                )}
+              </div>
               <div className="text-white font-bold text-lg">{category.count}</div>
               <div className="text-gray-400 text-sm">{category.name}</div>
             </div>
@@ -107,8 +123,12 @@ export default function Groups() {
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <div className={`w-14 h-14 bg-gradient-to-r ${group.color} rounded-xl flex items-center justify-center shadow-lg text-xl`}>
-                    {group.avatar}
+                  <div className={`w-14 h-14 bg-gradient-to-r ${group.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                    {typeof group.avatar === 'function' ? (
+                      <group.avatar />
+                    ) : (
+                      <group.avatar className="h-8 w-8 text-white" />
+                    )}
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">{group.name}</h3>
@@ -181,11 +201,12 @@ export default function Groups() {
       <div className="relative group cursor-pointer">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-gray-800 opacity-50 rounded-2xl blur group-hover:blur-lg transition-all"></div>
         <div className="relative bg-black/20 backdrop-blur-xl border border-white/10 border-dashed rounded-2xl p-12 hover:border-white/20 transition-all text-center">
-          <div className="text-6xl mb-4">➕</div>
+          <PlusIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-white mb-2">Create a New Group</h3>
           <p className="text-gray-400 mb-6">Start splitting expenses with friends, family, or colleagues</p>
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg">
-            Get Started
+          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2 mx-auto">
+            <PlusIcon className="h-5 w-5" />
+            <span>Get Started</span>
           </button>
         </div>
       </div>
