@@ -10,8 +10,6 @@ import {
   FireIcon,
   ChartBarIcon,
   BanknotesIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
   ClockIcon
 } from '@heroicons/react/24/outline'
 import { useDashboardStats, useRecentActivity, useCurrentUser } from '../hooks/useApi'
