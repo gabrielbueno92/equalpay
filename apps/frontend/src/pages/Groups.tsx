@@ -59,16 +59,16 @@ export default function Groups() {
       name: group.name,
       description: group.description,
       memberCount: group.members.length,
-      totalExpenses: group.totalExpenses,
+      totalExpenses: 0, // Default value since backend doesn't provide this yet
       yourBalance,
       lastActivity: getTimeAgo(group.createdAt),
       avatar: getGroupIcon(group.name),
       color: getGroupColor(index),
       members: group.members.map(member => 
-        member.userId === user?.id ? 'You' : member.fullName
+        member.id === user?.id ? 'You' : member.name
       ).slice(0, 4),
       recentExpense: `Recent activity in ${group.name}`,
-      currency: group.currency
+      currency: '$' // Default currency
     }
   }) || []
 
@@ -234,11 +234,11 @@ export default function Groups() {
                     <div className="text-gray-400 text-xs">Members</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-white font-bold text-lg">{group.currency}{group.totalExpenses.toFixed(0)}</div>
+                    <div className="text-white font-bold text-lg">{group.currency}{(group.totalExpenses || 0).toFixed(0)}</div>
                     <div className="text-gray-400 text-xs">Total Spent</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-white font-bold text-lg">{group.lastActivity}</div>
+                    <div className="text-white font-bold text-lg">{group.lastActivity || 'Today'}</div>
                     <div className="text-gray-400 text-xs">Last Activity</div>
                   </div>
                 </div>

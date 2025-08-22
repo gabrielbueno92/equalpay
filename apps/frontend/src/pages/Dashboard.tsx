@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   CreditCardIcon, 
   UserGroupIcon, 
@@ -7,12 +9,20 @@ import {
   SparklesIcon,
   FireIcon,
   ChartBarIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  TrendingUpIcon,
+  TrendingDownIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
 import { useDashboardStats, useRecentActivity, useCurrentUser } from '../hooks/useApi'
+import { useAuth } from '../contexts/AuthContext'
+import AddExpenseModal from '../components/AddExpenseModal'
 
 export default function Dashboard() {
-  const { data: user, isLoading: userLoading } = useCurrentUser()
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false)
+  
   const { data: statsData, isLoading: statsLoading } = useDashboardStats()
   const { data: activity, isLoading: activityLoading } = useRecentActivity(4)
 
@@ -82,11 +92,29 @@ export default function Dashboard() {
     category: expense.category
   })) || []
 
+  // Handler functions for quick actions
+  const handleAddExpense = () => {
+    setShowAddExpenseModal(true)
+  }
+  
+  const handleCreateGroup = () => {
+    navigate('/groups')
+  }
+  
+  const handleSettleUp = () => {
+    navigate('/balances')
+  }
+  
+  const handleAnalytics = () => {
+    // For now, navigate to expenses page
+    navigate('/expenses')
+  }
+  
   const quickActions = [
-    { name: 'Add Expense', icon: PlusIcon, color: 'from-blue-500 to-purple-600' },
-    { name: 'Create Group', icon: UserGroupIcon, color: 'from-purple-500 to-pink-500' },
-    { name: 'Settle Up', icon: BanknotesIcon, color: 'from-emerald-500 to-cyan-500' },
-    { name: 'Analytics', icon: ChartBarIcon, color: 'from-orange-500 to-red-500' },
+    { name: 'Add Expense', icon: PlusIcon, color: 'from-blue-500 to-purple-600', onClick: handleAddExpense },
+    { name: 'Create Group', icon: UserGroupIcon, color: 'from-purple-500 to-pink-500', onClick: handleCreateGroup },
+    { name: 'Settle Up', icon: BanknotesIcon, color: 'from-emerald-500 to-cyan-500', onClick: handleSettleUp },
+    { name: 'Analytics', icon: ChartBarIcon, color: 'from-orange-500 to-red-500', onClick: handleAnalytics },
   ]
 
   return (
@@ -164,7 +192,7 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {quickActions.map((action) => (
-          <button key={action.name} className="group relative">
+          <button key={action.name} onClick={action.onClick} className="group relative">
             <div className={`absolute inset-0 bg-gradient-to-r ${action.color} opacity-75 rounded-xl blur-sm group-hover:blur-none transition-all`}></div>
             <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all text-center">
               <action.icon className="h-6 w-6 text-white mx-auto mb-2" />
@@ -309,6 +337,16 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Add Expense Modal */}
+      <AddExpenseModal
+        isOpen={showAddExpenseModal}
+        onClose={() => setShowAddExpenseModal(false)}
+        onSuccess={() => {
+          setShowAddExpenseModal(false)
+          // Could add a toast notification here
+        }}
+      />
     </div>
   )
 }

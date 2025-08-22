@@ -17,6 +17,8 @@ import { useAuth } from '../contexts/AuthContext'
 export default function Balances() {
   const { user } = useAuth()
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [showSettleModal, setShowSettleModal] = useState(false)
 
   // Fetch data from API
   const { data: groups, isLoading: groupsLoading } = useGroups()
@@ -57,11 +59,15 @@ export default function Balances() {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2">
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className={`${showHistory ? 'bg-blue-600' : 'bg-white/10 hover:bg-white/20'} backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2`}
+          >
             <ClockIcon className="h-5 w-5" />
             <span>History</span>
           </button>
           <button 
+            onClick={() => setShowSettleModal(true)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2"
           >
             <BanknotesIcon className="h-5 w-5" />
@@ -267,12 +273,100 @@ export default function Balances() {
         ))}
       </div>
 
+      {/* History Panel */}
+      {showHistory && (
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-white mb-4">Settlement History</h2>
+          <div className="space-y-3">
+            {/* Mock history data */}
+            {[
+              { id: 1, date: '2025-08-20', from: 'You', to: 'Bob Smith', amount: 25.50, status: 'completed' },
+              { id: 2, date: '2025-08-18', from: 'Alice Johnson', to: 'You', amount: 40.00, status: 'completed' },
+              { id: 3, date: '2025-08-15', from: 'You', to: 'Diana Prince', amount: 15.75, status: 'completed' },
+            ].map(settlement => (
+              <div key={settlement.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                <div className="flex items-center space-x-4">
+                  <CheckCircleIcon className="h-6 w-6 text-emerald-400" />
+                  <div>
+                    <p className="text-white font-medium">
+                      {settlement.from} → {settlement.to}
+                    </p>
+                    <p className="text-gray-400 text-sm">{settlement.date}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-white font-bold">${settlement.amount.toFixed(2)}</p>
+                  <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-md">
+                    {settlement.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {!isLoading && groupBalance?.userBalances?.length === 0 && (
         <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
           <ScaleIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">No balances found!</h3>
           <p className="text-gray-400 mb-6">This group doesn't have any expenses yet</p>
           <p className="text-gray-400">Start by adding some expenses to see balances here.</p>
+        </div>
+      )}
+
+      {/* Settlement Modal */}
+      {showSettleModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Settle All Balances</h3>
+              <button
+                onClick={() => setShowSettleModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <p className="text-gray-300">
+                This will settle all outstanding balances in the current group using the optimal settlement plan.
+              </p>
+              
+              {settlementSuggestions.map(suggestion => (
+                <div key={suggestion.id} className="bg-white/5 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white text-sm">
+                      {suggestion.from} → {suggestion.to}
+                    </span>
+                    <span className="text-emerald-400 font-medium">
+                      ${suggestion.amount.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowSettleModal(false)}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-medium transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // Here you would call the settlement API
+                  alert('Settlement functionality would be implemented here!')
+                  setShowSettleModal(false)
+                }}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl font-medium transition-all"
+              >
+                Confirm Settlement
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

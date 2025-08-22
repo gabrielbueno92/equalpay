@@ -13,12 +13,14 @@ import {
   BanknotesIcon
 } from '@heroicons/react/24/outline'
 import { useExpenses, useGroups, useCurrentUser } from '../hooks/useApi'
+import AddExpenseModal from '../components/AddExpenseModal'
 
 export default function Expenses() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedGroup, setSelectedGroup] = useState('all')
   const [showAddExpense, setShowAddExpense] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
 
   const { data: user } = useCurrentUser()
   const { data: expensesData, isLoading: expensesLoading } = useExpenses()
@@ -97,7 +99,10 @@ export default function Expenses() {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`${showFilters ? 'bg-blue-600' : 'bg-white/10 hover:bg-white/20'} backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2`}
+          >
             <FunnelIcon className="h-5 w-5" />
             <span>Filters</span>
           </button>
@@ -229,6 +234,51 @@ export default function Expenses() {
             ))}
           </select>
         </div>
+        
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <h4 className="text-white font-medium mb-3">Advanced Filters</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Date Range</label>
+                <div className="flex space-x-2">
+                  <input
+                    type="date"
+                    className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  />
+                  <input
+                    type="date"
+                    className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Amount Range</label>
+                <div className="flex space-x-2">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-gray-500"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 placeholder-gray-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Paid By</label>
+                <select className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+                  <option value="all" className="bg-gray-800">All Members</option>
+                  <option value="you" className="bg-gray-800">You</option>
+                  <option value="others" className="bg-gray-800">Others</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Expenses List */}
@@ -378,6 +428,15 @@ export default function Expenses() {
         )}
       </div>
 
+      {/* Add Expense Modal */}
+      <AddExpenseModal
+        isOpen={showAddExpense}
+        onClose={() => setShowAddExpense(false)}
+        onSuccess={() => {
+          setShowAddExpense(false)
+          // Could add a toast notification here
+        }}
+      />
     </div>
   )
 }
