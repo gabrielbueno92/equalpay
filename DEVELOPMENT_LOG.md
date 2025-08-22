@@ -1,3 +1,4 @@
+
 # EqualPay Development Log
 
 ## Project Overview

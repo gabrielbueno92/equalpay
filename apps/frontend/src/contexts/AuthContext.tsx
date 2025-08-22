@@ -33,14 +33,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error 
   } = useCurrentUser()
 
-  const isAuthenticated = !!user && !error
+  // Check if we have a token in localStorage
+  const hasToken = !!localStorage.getItem('authToken')
+  const isAuthenticated = !!user && !error && hasToken
   
   // Show auth modal if user is not authenticated and not loading
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!hasToken || (!isLoading && !isAuthenticated && hasToken)) {
       setShowAuthModal(true)
     }
-  }, [isLoading, isAuthenticated])
+  }, [isLoading, isAuthenticated, hasToken])
 
   const value: AuthContextType = {
     user: user || null,

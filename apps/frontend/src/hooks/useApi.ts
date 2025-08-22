@@ -31,6 +31,7 @@ export function useCurrentUser() {
     queryFn: () => apiClient.getCurrentUser(),
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!localStorage.getItem('authToken'), // Only run if token exists
   })
 }
 
@@ -257,18 +258,19 @@ export function useMarkExpenseSplitAsPaid() {
 }
 
 // Balance Hooks
-export function useBalances(groupId?: number) {
+export function useGroupBalance(groupId: number) {
   return useQuery({
     queryKey: queryKeys.balances(groupId),
-    queryFn: () => apiClient.getBalances(groupId),
+    queryFn: () => apiClient.getGroupBalance(groupId),
+    enabled: !!groupId,
     staleTime: 2 * 60 * 1000,
   })
 }
 
-export function useUserBalances(userId: number) {
+export function useUserDebts(userId: number) {
   return useQuery({
     queryKey: queryKeys.userBalances(userId),
-    queryFn: () => apiClient.getUserBalances(userId),
+    queryFn: () => apiClient.getUserDebts(userId),
     enabled: !!userId,
     staleTime: 2 * 60 * 1000,
   })

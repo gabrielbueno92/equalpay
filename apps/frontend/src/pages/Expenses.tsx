@@ -12,6 +12,7 @@ import {
   ArrowDownIcon,
   BanknotesIcon
 } from '@heroicons/react/24/outline'
+import { useExpenses, useGroups, useCurrentUser } from '../hooks/useApi'
 
 export default function Expenses() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -19,78 +20,31 @@ export default function Expenses() {
   const [selectedGroup, setSelectedGroup] = useState('all')
   const [showAddExpense, setShowAddExpense] = useState(false)
 
-  const expenses = [
-    {
-      id: 1,
-      description: 'Dinner at La Pasta',
-      amount: 85.50,
-      category: 'Food',
-      group: 'Weekend Trip',
-      paidBy: 'You',
-      date: '2024-01-15',
-      time: '8:30 PM',
-      participants: ['You', 'Maria', 'Alex', 'John'],
-      yourShare: 21.38,
-      receipt: true,
-      status: 'settled'
-    },
-    {
-      id: 2,
-      description: 'Uber to Airport',
-      amount: 34.20,
-      category: 'Transport',
-      group: 'Weekend Trip',
-      paidBy: 'Maria',
-      date: '2024-01-15',
-      time: '6:00 AM',
-      participants: ['You', 'Maria'],
-      yourShare: 17.10,
-      receipt: false,
-      status: 'pending'
-    },
-    {
-      id: 3,
-      description: 'Hotel Room - 2 nights',
-      amount: 127.80,
-      category: 'Accommodation',
-      group: 'Weekend Trip',
-      paidBy: 'Alex',
-      date: '2024-01-14',
-      time: '3:00 PM',
-      participants: ['You', 'Maria', 'Alex', 'John'],
-      yourShare: 31.95,
-      receipt: true,
-      status: 'pending'
-    },
-    {
-      id: 4,
-      description: 'Morning Coffee',
-      amount: 12.50,
-      category: 'Food',
-      group: 'Work Team',
-      paidBy: 'You',
-      date: '2024-01-14',
-      time: '9:15 AM',
-      participants: ['You', 'Emma', 'David'],
-      yourShare: 4.17,
-      receipt: false,
-      status: 'settled'
-    },
-    {
-      id: 5,
-      description: 'Netflix Subscription',
-      amount: 15.99,
-      category: 'Entertainment',
-      group: 'Roommates',
-      paidBy: 'Sarah',
-      date: '2024-01-13',
-      time: '12:00 PM',
-      participants: ['You', 'Sarah', 'Mike'],
-      yourShare: 5.33,
-      receipt: true,
-      status: 'pending'
+  const { data: user } = useCurrentUser()
+  const { data: expensesData, isLoading: expensesLoading } = useExpenses()
+  const { data: groups } = useGroups()
+
+  const processedExpenses = expensesData?.map(expense => {
+    const userSplit = expense.splits.find(split => split.userId === user?.id)
+    const date = new Date(expense.createdAt)
+    
+    return {
+      id: expense.id,
+      description: expense.description,
+      amount: expense.amount,
+      category: expense.category,
+      group: expense.groupName,
+      paidBy: expense.paidByName === user?.fullName ? 'You' : expense.paidByName,
+      date: date.toISOString().split('T')[0],
+      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      participants: expense.splits.map(split => 
+        split.userId === user?.id ? 'You' : split.username
+      ),
+      yourShare: userSplit?.amount || 0,
+      receipt: false, // This would need to be added to the backend model if needed
+      status: userSplit?.paid ? 'settled' : 'pending'
     }
-  ]
+  }) || []
 
   const categories = [
     { id: 'all', name: 'All Categories', icon: CreditCardIcon, color: 'from-gray-500 to-gray-700' },
@@ -100,18 +54,19 @@ export default function Expenses() {
     { id: 'entertainment', name: 'Entertainment', icon: CreditCardIcon, color: 'from-emerald-500 to-teal-500' }
   ]
 
-  const groups = [
+  const groupOptions = [
     { id: 'all', name: 'All Groups' },
-    { id: 'weekend-trip', name: 'Weekend Trip' },
-    { id: 'roommates', name: 'Roommates' },
-    { id: 'work-team', name: 'Work Team' }
+    ...(groups?.map(group => ({ 
+      id: group.id.toString(), 
+      name: group.name 
+    })) || [])
   ]
 
-  const filteredExpenses = expenses.filter(expense => {
+  const filteredExpenses = processedExpenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expense.group.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || expense.category.toLowerCase() === selectedCategory
-    const matchesGroup = selectedGroup === 'all' || expense.group.toLowerCase().replace(' ', '-') === selectedGroup
+    const matchesGroup = selectedGroup === 'all' || expense.group === groups?.find(g => g.id.toString() === selectedGroup)?.name
     
     return matchesSearch && matchesCategory && matchesGroup
   })
@@ -158,59 +113,79 @@ export default function Expenses() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-75 rounded-2xl blur group-hover:blur-md transition-all"></div>
-          <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-                <CreditCardIcon className="h-6 w-6 text-white" />
-              </div>
-              <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
-                {filteredExpenses.length} expenses
+        {expensesLoading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-500 to-gray-700 opacity-75 rounded-2xl blur"></div>
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gray-600/50 rounded-xl animate-pulse"></div>
+                  <div className="px-2 py-1 rounded-full bg-gray-600/50 animate-pulse h-6 w-20"></div>
+                </div>
+                <div>
+                  <div className="bg-gray-600/50 rounded h-4 w-20 mb-1 animate-pulse"></div>
+                  <div className="bg-gray-600/50 rounded h-8 w-32 animate-pulse"></div>
+                </div>
               </div>
             </div>
-            <div>
-              <p className="text-gray-400 text-sm font-medium mb-1">Total Amount</p>
-              <p className="text-3xl font-black text-white">${totalExpenses.toFixed(2)}</p>
+          ))
+        ) : (
+          <>
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-75 rounded-2xl blur group-hover:blur-md transition-all"></div>
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <CreditCardIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                    {filteredExpenses.length} expenses
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm font-medium mb-1">Total Amount</p>
+                  <p className="text-3xl font-black text-white">${totalExpenses.toFixed(2)}</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-75 rounded-2xl blur group-hover:blur-md transition-all"></div>
-          <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
-                <BanknotesIcon className="h-6 w-6 text-white" />
-              </div>
-              <div className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
-                your share
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-75 rounded-2xl blur group-hover:blur-md transition-all"></div>
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <BanknotesIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
+                    your share
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm font-medium mb-1">Your Total</p>
+                  <p className="text-3xl font-black text-white">${yourTotal.toFixed(2)}</p>
+                </div>
               </div>
             </div>
-            <div>
-              <p className="text-gray-400 text-sm font-medium mb-1">Your Total</p>
-              <p className="text-3xl font-black text-white">${yourTotal.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
 
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 opacity-75 rounded-2xl blur group-hover:blur-md transition-all"></div>
-          <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                <UserGroupIcon className="h-6 w-6 text-white" />
-              </div>
-              <div className="px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
-                active groups
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 opacity-75 rounded-2xl blur group-hover:blur-md transition-all"></div>
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <UserGroupIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="px-2 py-1 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                    active groups
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm font-medium mb-1">Groups</p>
+                  <p className="text-3xl font-black text-white">{groups?.length || 0}</p>
+                </div>
               </div>
             </div>
-            <div>
-              <p className="text-gray-400 text-sm font-medium mb-1">Groups</p>
-              <p className="text-3xl font-black text-white">4</p>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -247,7 +222,7 @@ export default function Expenses() {
             onChange={(e) => setSelectedGroup(e.target.value)}
             className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           >
-            {groups.map(group => (
+            {groupOptions.map(group => (
               <option key={group.id} value={group.id} className="bg-gray-800">
                 {group.name}
               </option>
@@ -258,7 +233,43 @@ export default function Expenses() {
 
       {/* Expenses List */}
       <div className="space-y-4">
-        {filteredExpenses.map((expense) => (
+        {expensesLoading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <div key={index} className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4 flex-1">
+                  <div className="w-14 h-14 bg-gray-600/50 rounded-xl animate-pulse"></div>
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="bg-gray-600/50 rounded h-5 w-32 animate-pulse"></div>
+                      <div className="bg-gray-600/50 rounded h-4 w-16 animate-pulse"></div>
+                      <div className="bg-gray-600/50 rounded h-4 w-16 animate-pulse"></div>
+                      <div className="bg-gray-600/50 rounded h-4 w-16 animate-pulse"></div>
+                    </div>
+                    <div className="bg-gray-600/50 rounded h-4 w-48 mb-3 animate-pulse"></div>
+                    <div className="flex items-center space-x-2 mb-3">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="w-6 h-6 bg-gray-600/50 rounded-full animate-pulse"></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="text-right">
+                    <div className="bg-gray-600/50 rounded h-6 w-20 mb-1 animate-pulse"></div>
+                    <div className="bg-gray-600/50 rounded h-4 w-24 mb-2 animate-pulse"></div>
+                    <div className="bg-gray-600/50 rounded h-4 w-16 animate-pulse"></div>
+                  </div>
+                  <div className="flex flex-col space-y-2">
+                    <div className="w-8 h-8 bg-gray-600/50 rounded-lg animate-pulse"></div>
+                    <div className="w-8 h-8 bg-gray-600/50 rounded-lg animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : filteredExpenses.length > 0 ? (
+          filteredExpenses.map((expense) => (
           <div key={expense.id} className="group bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
             <div className="flex items-start justify-between">
               {/* Left Side - Main Info */}
@@ -350,23 +361,23 @@ export default function Expenses() {
               </div>
             </div>
           </div>
-        ))}
+          ))
+        ) : (
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
+            <CreditCardIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">No expenses found</h3>
+            <p className="text-gray-400 mb-6">Try adjusting your search or filters, or add your first expense</p>
+            <button 
+              onClick={() => setShowAddExpense(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2 mx-auto"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span>Add Your First Expense</span>
+            </button>
+          </div>
+        )}
       </div>
 
-      {filteredExpenses.length === 0 && (
-        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
-          <CreditCardIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">No expenses found</h3>
-          <p className="text-gray-400 mb-6">Try adjusting your search or filters</p>
-          <button 
-            onClick={() => setShowAddExpense(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2 mx-auto"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span>Add Your First Expense</span>
-          </button>
-        </div>
-      )}
     </div>
   )
 }

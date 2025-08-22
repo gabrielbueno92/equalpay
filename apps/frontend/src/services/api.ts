@@ -51,13 +51,27 @@ export interface ExpenseSplit {
 }
 
 export interface Balance {
-  fromUserId: number
-  fromUsername: string
-  toUserId: number
-  toUsername: string
-  amount: number
   groupId: number
   groupName: string
+  totalExpenses: number
+  userBalances: UserBalance[]
+  settlements: Debt[]
+}
+
+export interface UserBalance {
+  userId: number
+  userName: string
+  totalPaid: number
+  totalOwed: number
+  netBalance: number
+}
+
+export interface Debt {
+  debtorId: number
+  debtorName: string
+  creditorId: number
+  creditorName: string
+  amount: number
 }
 
 export interface CreateGroupRequest {
@@ -256,20 +270,16 @@ class ApiClient {
   }
 
   // Balance endpoints
-  async getBalances(groupId?: number): Promise<Balance[]> {
-    const endpoint = groupId ? `/balances?groupId=${groupId}` : '/balances'
-    return this.request<Balance[]>(endpoint)
+  async getGroupBalance(groupId: number): Promise<Balance> {
+    return this.request<Balance>(`/balances/group/${groupId}`)
   }
 
-  async getUserBalances(userId: number): Promise<Balance[]> {
-    return this.request<Balance[]>(`/users/${userId}/balances`)
+  async getUserDebts(userId: number): Promise<Debt[]> {
+    return this.request<Debt[]>(`/balances/user/${userId}/debts`)
   }
 
-  async settleBalance(fromUserId: number, toUserId: number, amount: number, groupId?: number): Promise<void> {
-    return this.request<void>('/balances/settle', {
-      method: 'POST',
-      body: JSON.stringify({ fromUserId, toUserId, amount, groupId }),
-    })
+  async getUserNetBalance(userId: number, groupId: number): Promise<number> {
+    return this.request<number>(`/balances/user/${userId}/group/${groupId}/net-balance`)
   }
 
   // Dashboard/Statistics endpoints
