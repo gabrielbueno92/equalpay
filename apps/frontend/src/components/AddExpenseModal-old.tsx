@@ -11,7 +11,7 @@ import {
   UsersIcon
 } from '@heroicons/react/24/outline'
 import { useGroups, useCreateExpense } from '../hooks/useApi'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
 interface AddExpenseModalProps {
   isOpen: boolean

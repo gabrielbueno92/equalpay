@@ -7,7 +7,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+        generate_statistics: false
+        use_sql_comments: false
     
   h2:
     console:
@@ -15,5 +21,15 @@ spring:
       
 logging:
   level:
-    org.springframework.web: DEBUG
-    org.hibernate: DEBUG
+    root: INFO
+    org.springframework.web: WARN
+    org.hibernate: ERROR
+    org.hibernate.SQL: ERROR
+    org.hibernate.type: ERROR
+    org.hibernate.orm: ERROR
+    org.hibernate.engine: ERROR
+    org.hibernate.query: ERROR
+    org.hibernate.loader: ERROR
+    org.hibernate.sql.ast: ERROR
+    org.hibernate.sql.results: ERROR
+    com.equalpay: DEBUG

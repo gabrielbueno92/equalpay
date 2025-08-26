@@ -74,12 +74,18 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     Long countByGroupId(@Param("groupId") Long groupId);
 
     // Último gasto de un grupo
-    @Query("SELECT e FROM Expense e WHERE e.group.id = :groupId ORDER BY e.expenseDate DESC LIMIT 1")
-    Expense findLatestByGroupId(@Param("groupId") Long groupId);
+    @Query("SELECT e FROM Expense e WHERE e.group.id = :groupId ORDER BY e.expenseDate DESC")
+    List<Expense> findByGroupIdOrderByExpenseDateDesc(@Param("groupId") Long groupId);
+    
+    // Helper method to get latest expense
+    default Expense findLatestByGroupId(Long groupId) {
+        List<Expense> expenses = findByGroupIdOrderByExpenseDateDesc(groupId);
+        return expenses.isEmpty() ? null : expenses.get(0);
+    }
 
     // Dashboard methods
-    @Query("SELECT DISTINCT e FROM Expense e LEFT JOIN FETCH e.group LEFT JOIN FETCH e.payer LEFT JOIN FETCH e.participants LEFT JOIN FETCH e.expenseSplits es LEFT JOIN FETCH es.user WHERE (e.payer.id = :userId OR :userId IN (SELECT p.id FROM e.participants p)) ORDER BY e.createdAt DESC LIMIT :limit")
-    List<Expense> findRecentExpensesByUserWithDetails(@Param("userId") Long userId, @Param("limit") int limit);
+    @Query("SELECT DISTINCT e FROM Expense e LEFT JOIN FETCH e.group LEFT JOIN FETCH e.payer LEFT JOIN FETCH e.participants LEFT JOIN FETCH e.expenseSplits es LEFT JOIN FETCH es.user WHERE (e.payer.id = :userId OR :userId IN (SELECT p.id FROM e.participants p)) ORDER BY e.createdAt DESC")
+    List<Expense> findRecentExpensesByUserWithDetails(@Param("userId") Long userId);
 
     @Query("SELECT e FROM Expense e JOIN e.participants p WHERE p.id = :userId AND e.createdAt >= :since")
     List<Expense> findExpensesByParticipantIdSince(@Param("userId") Long userId, @Param("since") LocalDateTime since);

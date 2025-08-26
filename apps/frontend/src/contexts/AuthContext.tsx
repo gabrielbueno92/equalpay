@@ -1,24 +1,6 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { useState, ReactNode } from 'react'
 import type { User } from '../services/api'
-import { useCurrentUser } from '../hooks/useApi'
-
-interface AuthContextType {
-  user: User | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  showAuthModal: boolean
-  setShowAuthModal: (show: boolean) => void
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+import { AuthContext } from '../hooks/useAuth'
 
 interface AuthProviderProps {
   children: ReactNode

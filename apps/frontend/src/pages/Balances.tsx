@@ -12,7 +12,7 @@ import {
   CreditCardIcon
 } from '@heroicons/react/24/outline'
 import { useGroupBalance, useUserDebts, useGroups } from '../hooks/useApi'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
 export default function Balances() {
   const { user } = useAuth()

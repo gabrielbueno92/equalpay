@@ -13,7 +13,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline'
 import { useDashboardStats, useRecentActivity, useCurrentUser } from '../hooks/useApi'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import AddExpenseModal from '../components/AddExpenseModal'
 import CreateGroupModal from '../components/CreateGroupModal'
 

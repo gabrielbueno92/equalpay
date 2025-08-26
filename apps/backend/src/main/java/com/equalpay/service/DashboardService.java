@@ -44,9 +44,10 @@ public class DashboardService {
 
     public RecentActivityDTO getRecentActivity(Long userId, int limit) {
         // Get recent expenses where user is involved (as payer or participant)
-        List<Expense> recentExpenses = expenseRepository.findRecentExpensesByUserWithDetails(userId, limit);
+        List<Expense> recentExpenses = expenseRepository.findRecentExpensesByUserWithDetails(userId);
         
         List<RecentActivityDTO.RecentExpenseDTO> expenseList = recentExpenses.stream()
+            .limit(limit) // Apply limit in Java
             .<RecentActivityDTO.RecentExpenseDTO>map(expense -> new RecentActivityDTO.RecentExpenseDTO(
                 expense.getId(),
                 expense.getDescription(),
