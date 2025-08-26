@@ -34,17 +34,17 @@ export default function Expenses() {
       id: expense.id,
       description: expense.description,
       amount: expense.amount,
-      category: expense.category,
-      group: expense.groupName,
-      paidBy: expense.paidByName === user?.fullName ? 'You' : expense.paidByName,
+      category: 'general', // Backend doesn't have category yet - use default
+      group: expense.group?.name || 'Unknown Group',
+      paidBy: expense.payer?.name === user?.name ? 'You' : expense.payer?.name || 'Unknown',
       date: date.toISOString().split('T')[0],
       time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      participants: expense.splits.map(split => 
-        split.userId === user?.id ? 'You' : split.username
-      ),
-      yourShare: userSplit?.amount || 0,
+      participants: expense.participants?.map(participant => 
+        participant.id === user?.id ? 'You' : participant.name
+      ) || [],
+      yourShare: userSplit?.amountOwed || 0,
       receipt: false, // This would need to be added to the backend model if needed
-      status: userSplit?.paid ? 'settled' : 'pending'
+      status: 'pending' // Backend doesn't track payment status yet
     }
   }) || []
 

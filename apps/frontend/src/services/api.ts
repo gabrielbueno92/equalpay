@@ -4,9 +4,10 @@ const API_BASE_URL = 'http://localhost:8080/api'
 // Types
 export interface User {
   id: number
-  username: string
+  name: string
   email: string
-  fullName: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Group {
@@ -14,40 +15,36 @@ export interface Group {
   name: string
   description: string
   createdAt: string
-  members: GroupMember[]
-  totalExpenses: number
-  currency: string
+  updatedAt: string
+  members: User[]
 }
 
-export interface GroupMember {
-  id: number
-  userId: number
-  username: string
-  fullName: string
-  role: 'ADMIN' | 'MEMBER'
-  joinedAt: string
-}
+// Removed GroupMember interface - backend uses User directly
 
 export interface Expense {
   id: number
   description: string
   amount: number
-  currency: string
-  category: string
-  groupId: number
-  groupName: string
-  paidById: number
-  paidByName: string
+  expenseDate: string
   createdAt: string
+  updatedAt: string
+  splitType: 'EQUAL' | 'PERCENTAGE' | 'EXACT_AMOUNT'
+  notes?: string
+  payerId: number
+  payer: User
+  groupId: number
+  group: Group
+  participants: User[]
   splits: ExpenseSplit[]
+  amountPerParticipant: number
+  participantCount: number
 }
 
 export interface ExpenseSplit {
-  id: number
   userId: number
-  username: string
-  amount: number
-  paid: boolean
+  userName: string
+  amountOwed: number
+  percentage: number
 }
 
 export interface Balance {
@@ -77,22 +74,20 @@ export interface Debt {
 export interface CreateGroupRequest {
   name: string
   description: string
-  currency: string
 }
 
 export interface CreateExpenseRequest {
   description: string
   amount: number
-  currency: string
-  category: string
   groupId: number
-  splits: CreateExpenseSplitRequest[]
+  splitType: 'EQUAL' | 'PERCENTAGE' | 'EXACT_AMOUNT'
+  paidById: number
+  expenseDate: string
+  participantIds: number[]
+  notes?: string
 }
 
-export interface CreateExpenseSplitRequest {
-  userId: number
-  amount: number
-}
+// Removed CreateExpenseSplitRequest - backend handles splits automatically
 
 // API Client Class
 class ApiClient {
@@ -200,8 +195,8 @@ class ApiClient {
     return this.request<Group>(`/groups/${id}`)
   }
 
-  async createGroup(group: CreateGroupRequest): Promise<Group> {
-    return this.request<Group>('/groups', {
+  async createGroup(group: CreateGroupRequest, creatorId: number): Promise<Group> {
+    return this.request<Group>(`/groups?creatorId=${creatorId}`, {
       method: 'POST',
       body: JSON.stringify(group),
     })
@@ -244,9 +239,21 @@ class ApiClient {
   }
 
   async createExpense(expense: CreateExpenseRequest): Promise<Expense> {
+    // Transform frontend format to backend ExpenseDTO format
+    const expenseDTO = {
+      description: expense.description,
+      amount: expense.amount,
+      expenseDate: expense.expenseDate,
+      splitType: expense.splitType,
+      notes: expense.notes,
+      payerId: expense.paidById,
+      groupId: expense.groupId,
+      participants: expense.participantIds.map(id => ({ id }))
+    }
+    
     return this.request<Expense>('/expenses', {
       method: 'POST',
-      body: JSON.stringify(expense),
+      body: JSON.stringify(expenseDTO),
     })
   }
 
@@ -283,7 +290,7 @@ class ApiClient {
   }
 
   // Dashboard/Statistics endpoints
-  async getDashboardStats(): Promise<{
+  async getDashboardStats(userId: number): Promise<{
     totalSpent: number
     activeGroups: number
     netBalance: number
@@ -293,14 +300,22 @@ class ApiClient {
       netBalance: number
     }
   }> {
-    return this.request('/dashboard/stats')
+    return this.request(`/dashboard/stats?userId=${userId}`)
   }
 
-  async getRecentActivity(limit: number = 10): Promise<{
-    expenses: Expense[]
+  async getRecentActivity(userId: number, limit: number = 10): Promise<{
+    expenses: {
+      id: number
+      description: string
+      amount: number
+      category: string
+      groupName: string
+      paidByName: string
+      createdAt: string
+    }[]
     settlements: any[]
   }> {
-    return this.request(`/dashboard/activity?limit=${limit}`)
+    return this.request(`/dashboard/activity?userId=${userId}&limit=${limit}`)
   }
 }
 

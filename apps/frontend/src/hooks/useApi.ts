@@ -122,7 +122,8 @@ export function useCreateGroup() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: (group: CreateGroupRequest) => apiClient.createGroup(group),
+    mutationFn: ({ group, creatorId }: { group: CreateGroupRequest; creatorId: number }) => 
+      apiClient.createGroup(group, creatorId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })
@@ -300,20 +301,26 @@ export function useSettleBalance() {
 }
 
 // Dashboard Hooks
-export function useDashboardStats() {
+export function useDashboardStats(userId?: number) {
+  const defaultUserId = 1 // Demo mode user ID
+  const userIdToUse = userId || defaultUserId
+  
   return useQuery({
-    queryKey: queryKeys.dashboardStats,
-    queryFn: () => apiClient.getDashboardStats(),
-    staleTime: 1 * 60 * 1000, // 1 minute
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    queryKey: [...queryKeys.dashboardStats, userIdToUse],
+    queryFn: () => apiClient.getDashboardStats(userIdToUse),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    enabled: !!userIdToUse
   })
 }
 
-export function useRecentActivity(limit: number = 10) {
+export function useRecentActivity(limit: number = 10, userId?: number) {
+  const defaultUserId = 1 // Demo mode user ID
+  const userIdToUse = userId || defaultUserId
+  
   return useQuery({
-    queryKey: queryKeys.recentActivity,
-    queryFn: () => apiClient.getRecentActivity(limit),
-    staleTime: 1 * 60 * 1000,
-    refetchInterval: 2 * 60 * 1000, // Refetch every 2 minutes
+    queryKey: [...queryKeys.recentActivity, userIdToUse, limit],
+    queryFn: () => apiClient.getRecentActivity(userIdToUse, limit),
+    staleTime: 1 * 60 * 1000, // 1 minute
+    enabled: !!userIdToUse
   })
 }

@@ -229,4 +229,35 @@ public class BalanceService {
 
         return totalPaid.subtract(totalOwed);
     }
+
+    public List<BalanceDTO> getUserBalances(Long userId) {
+        // Get all groups where user is a member
+        List<Group> userGroups = groupRepository.findGroupsByUserId(userId);
+        
+        return userGroups.stream()
+                .map(group -> {
+                    BalanceDTO groupBalance = calculateGroupBalance(group.getId());
+                    // Find this user's balance in the group
+                    Optional<BalanceDTO.UserBalanceDTO> userBalance = groupBalance.getUserBalances().stream()
+                            .filter(ub -> ub.getUserId().equals(userId))
+                            .findFirst();
+                    
+                    if (userBalance.isPresent()) {
+                        // Create a simplified BalanceDTO with just the user's balance
+                        BalanceDTO result = new BalanceDTO();
+                        result.setGroupId(group.getId());
+                        result.setGroupName(group.getName());
+                        result.setBalance(userBalance.get().getNetBalance().doubleValue());
+                        return result;
+                    } else {
+                        // User has no balance in this group
+                        BalanceDTO result = new BalanceDTO();
+                        result.setGroupId(group.getId());
+                        result.setGroupName(group.getName());
+                        result.setBalance(0.0);
+                        return result;
+                    }
+                })
+                .collect(Collectors.toList());
+    }
 }

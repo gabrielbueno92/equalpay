@@ -12,12 +12,13 @@ interface AddExpenseModalProps {
 
 interface ExpenseFormData {
   description: string
-  amount: number
+  amount: string
   groupId: number
   participantIds: number[]
   splitType: 'EQUAL' | 'PERCENTAGE' | 'EXACT_AMOUNT'
   paidById: number
   expenseDate: string
+  selectAllParticipants: boolean
 }
 
 export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpenseModalProps) {
@@ -27,12 +28,13 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
   
   const [formData, setFormData] = useState<ExpenseFormData>({
     description: '',
-    amount: 0,
+    amount: '',
     groupId: groups?.[0]?.id || 1,
     participantIds: [],
     splitType: 'EQUAL',
     paidById: user?.id || 1,
-    expenseDate: new Date().toISOString().substring(0, 16)
+    expenseDate: new Date().toISOString(),
+    selectAllParticipants: true
   })
 
   const selectedGroup = groups?.find(g => g.id === formData.groupId)
@@ -40,17 +42,23 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.description || formData.amount <= 0) {
+    const amount = parseFloat(formData.amount)
+    if (!formData.description || !formData.amount || amount <= 0) {
       alert('Please fill in all required fields')
       return
     }
 
     try {
       await createExpenseMutation.mutateAsync({
-        ...formData,
-        participantIds: formData.participantIds.length > 0 
-          ? formData.participantIds 
-          : selectedGroup?.members.map(m => m.id) || []
+        description: formData.description,
+        amount: parseFloat(formData.amount),
+        groupId: formData.groupId,
+        splitType: formData.splitType,
+        paidById: formData.paidById,
+        expenseDate: formData.expenseDate,
+        participantIds: formData.selectAllParticipants 
+          ? selectedGroup?.members.map(m => m.id) || []
+          : formData.participantIds
       })
       
       onSuccess?.()
@@ -59,12 +67,13 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
       // Reset form
       setFormData({
         description: '',
-        amount: 0,
+        amount: '',
         groupId: groups?.[0]?.id || 1,
         participantIds: [],
         splitType: 'EQUAL',
         paidById: user?.id || 1,
-        expenseDate: new Date().toISOString().substring(0, 16)
+        expenseDate: new Date().toISOString(),
+        selectAllParticipants: true
       })
     } catch (error) {
       console.error('Error creating expense:', error)
@@ -73,11 +82,24 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
   }
 
   const toggleParticipant = (memberId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      participantIds: prev.participantIds.includes(memberId)
+    setFormData(prev => {
+      const newParticipantIds = prev.participantIds.includes(memberId)
         ? prev.participantIds.filter(p => p !== memberId)
         : [...prev.participantIds, memberId]
+      
+      return {
+        ...prev,
+        participantIds: newParticipantIds,
+        selectAllParticipants: false // Switch to manual selection
+      }
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setFormData(prev => ({
+      ...prev,
+      selectAllParticipants: !prev.selectAllParticipants,
+      participantIds: [] // Clear manual selections
     }))
   }
 
@@ -149,9 +171,9 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                       type="number"
                       step="0.01"
                       value={formData.amount}
-                      onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      placeholder="0.00"
+                      placeholder="Enter amount (e.g., 25.50)"
                       required
                       min="0"
                     />
@@ -164,7 +186,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                     </label>
                     <select
                       value={formData.groupId}
-                      onChange={(e) => setFormData(prev => ({ ...prev, groupId: parseInt(e.target.value), participantIds: [] }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, groupId: parseInt(e.target.value), participantIds: [], selectAllParticipants: true }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                       required
                     >
@@ -200,7 +222,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                     <input
                       type="date"
                       value={formData.expenseDate.split('T')[0]}
-                      onChange={(e) => setFormData(prev => ({ ...prev, expenseDate: e.target.value + 'T12:00:00' }))}
+                      onChange={(e) => setFormData(prev => ({ ...prev, expenseDate: new Date(e.target.value + 'T12:00:00').toISOString() }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     />
                   </div>
@@ -208,25 +230,46 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                   {/* Participants */}
                   {selectedGroup && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Participants ({formData.participantIds.length === 0 ? selectedGroup.members.length : formData.participantIds.length} people)
+                      <label className="block text-sm font-medium text-gray-300 mb-3">
+                        Split with ({formData.selectAllParticipants ? selectedGroup.members.length : formData.participantIds.length} people)
                       </label>
-                      <div className="space-y-2">
-                        {selectedGroup.members.map(member => (
-                          <label key={member.id} className="flex items-center space-x-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={formData.participantIds.length === 0 || formData.participantIds.includes(member.id)}
-                              onChange={() => toggleParticipant(member.id)}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-white">{member.name}</span>
-                          </label>
-                        ))}
+                      
+                      {/* Select All Toggle */}
+                      <div className="mb-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.selectAllParticipants}
+                            onChange={toggleSelectAll}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-white font-medium">Split with all group members</span>
+                        </label>
+                        <p className="text-xs text-gray-400 mt-1 ml-6">
+                          Include everyone in {selectedGroup.name}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-2">
-                        Leave empty to include all group members
-                      </p>
+
+                      {/* Individual Selection */}
+                      {!formData.selectAllParticipants && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-400 mb-2">Or select specific people:</p>
+                          {selectedGroup.members.map(member => (
+                            <label key={member.id} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/5">
+                              <input
+                                type="checkbox"
+                                checked={formData.participantIds.includes(member.id)}
+                                onChange={() => toggleParticipant(member.id)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-white">{member.name}</span>
+                              {member.id === user?.id && (
+                                <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-1 rounded-full">You</span>
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 

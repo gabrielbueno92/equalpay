@@ -15,11 +15,13 @@ import {
 import { useDashboardStats, useRecentActivity, useCurrentUser } from '../hooks/useApi'
 import { useAuth } from '../contexts/AuthContext'
 import AddExpenseModal from '../components/AddExpenseModal'
+import CreateGroupModal from '../components/CreateGroupModal'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false)
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
   
   const { data: statsData, isLoading: statsLoading } = useDashboardStats()
   const { data: activity, isLoading: activityLoading } = useRecentActivity(4)
@@ -85,7 +87,7 @@ export default function Dashboard() {
     amount: expense.amount,
     group: expense.groupName,
     date: getTimeAgo(expense.createdAt),
-    paidBy: expense.paidByName === user?.fullName ? 'You' : expense.paidByName,
+    paidBy: expense.paidByName === user?.name ? 'You' : expense.paidByName,
     avatar: getCategoryIcon(expense.category),
     category: expense.category
   })) || []
@@ -96,7 +98,7 @@ export default function Dashboard() {
   }
   
   const handleCreateGroup = () => {
-    navigate('/groups')
+    setShowCreateGroupModal(true)
   }
   
   const handleSettleUp = () => {
@@ -121,11 +123,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-black text-white mb-2">
-            {userLoading ? (
-              <span className="animate-pulse bg-white/20 rounded-lg h-10 w-64 inline-block"></span>
-            ) : (
-              `Good evening, ${user?.fullName?.split(' ')[0] || 'User'}! 🌙`
-            )}
+            {`Good evening, ${user?.name?.split(' ')[0] || 'User'}! 🌙`}
           </h1>
           <p className="text-gray-400 text-lg">
             Here's your financial overview for today
@@ -342,6 +340,16 @@ export default function Dashboard() {
         onClose={() => setShowAddExpenseModal(false)}
         onSuccess={() => {
           setShowAddExpenseModal(false)
+          // Could add a toast notification here
+        }}
+      />
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isOpen={showCreateGroupModal}
+        onClose={() => setShowCreateGroupModal(false)}
+        onSuccess={() => {
+          setShowCreateGroupModal(false)
           // Could add a toast notification here
         }}
       />

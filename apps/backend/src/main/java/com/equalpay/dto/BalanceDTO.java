@@ -10,6 +10,7 @@ public class BalanceDTO {
     private BigDecimal totalExpenses;
     private List<UserBalanceDTO> userBalances;
     private List<DebtDTO> settlements;
+    private Double balance; // For simplified balance representation
 
     public BalanceDTO() {}
 
@@ -58,6 +59,14 @@ public class BalanceDTO {
 
     public void setSettlements(List<DebtDTO> settlements) {
         this.settlements = settlements;
+    }
+
+    public Double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Double balance) {
+        this.balance = balance;
     }
 
     // DTO para balance individual de usuario

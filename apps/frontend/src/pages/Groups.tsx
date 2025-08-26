@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { 
   UserGroupIcon,
   PlusIcon,
@@ -6,10 +7,12 @@ import {
   MusicalNoteIcon
 } from '@heroicons/react/24/outline'
 import { useGroups, useCurrentUser } from '../hooks/useApi'
+import CreateGroupModal from '../components/CreateGroupModal'
 
 export default function Groups() {
   const { data: user } = useCurrentUser()
   const { data: groupsData, isLoading: groupsLoading } = useGroups()
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
 
   const getGroupIcon = (groupName: string) => {
     const name = groupName.toLowerCase()
@@ -116,7 +119,10 @@ export default function Groups() {
             <CogIcon className="h-5 w-5" />
             <span>Group Settings</span>
           </button>
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2">
+          <button 
+            onClick={() => setShowCreateGroupModal(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2"
+          >
             <PlusIcon className="h-5 w-5" />
             <span>Create Group</span>
           </button>
@@ -284,7 +290,10 @@ export default function Groups() {
               <UserGroupIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white mb-2">No groups yet</h3>
               <p className="text-gray-400 mb-6">Create your first group to start splitting expenses</p>
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg">
+              <button 
+                onClick={() => setShowCreateGroupModal(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg"
+              >
                 <PlusIcon className="h-5 w-5 inline mr-2" />
                 Create Your First Group
               </button>
@@ -293,6 +302,16 @@ export default function Groups() {
         )}
       </div>
 
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isOpen={showCreateGroupModal}
+        onClose={() => setShowCreateGroupModal(false)}
+        onSuccess={() => {
+          setShowCreateGroupModal(false)
+          // Could add a toast notification here
+        }}
+      />
+
       {/* Create Group CTA */}
       <div className="relative group cursor-pointer">
         <div className="absolute inset-0 bg-gradient-to-r from-gray-600 to-gray-800 opacity-50 rounded-2xl blur group-hover:blur-lg transition-all"></div>
@@ -300,7 +319,10 @@ export default function Groups() {
           <PlusIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-white mb-2">Create a New Group</h3>
           <p className="text-gray-400 mb-6">Start splitting expenses with friends, family, or colleagues</p>
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2 mx-auto">
+          <button 
+            onClick={() => setShowCreateGroupModal(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2 mx-auto"
+          >
             <PlusIcon className="h-5 w-5" />
             <span>Get Started</span>
           </button>
