@@ -11,99 +11,40 @@ import {
   PaperAirplaneIcon,
   CreditCardIcon
 } from '@heroicons/react/24/outline'
+import { useGroupBalance, useUserDebts, useGroups } from '../hooks/useApi'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Balances() {
-  const [selectedGroup, setSelectedGroup] = useState('all')
-  const [showSettlement, setShowSettlement] = useState(false)
+  const { user } = useAuth()
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [showSettleModal, setShowSettleModal] = useState(false)
 
-  const balances = [
-    {
-      id: 1,
-      name: 'Maria Rodriguez',
-      avatar: 'M',
-      amount: 45.20,
-      type: 'owes_you',
-      group: 'Weekend Trip',
-      lastExpense: 'Hotel Room - 2 days ago',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      name: 'Alex Johnson',
-      avatar: 'A',
-      amount: 23.80,
-      type: 'owes_you',
-      group: 'Weekend Trip',
-      lastExpense: 'Uber to Airport - 3 days ago',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      name: 'Sarah Wilson',
-      avatar: 'S',
-      amount: 67.50,
-      type: 'you_owe',
-      group: 'Roommates',
-      lastExpense: 'Groceries - 1 week ago',
-      status: 'pending'
-    },
-    {
-      id: 4,
-      name: 'Emma Davis',
-      avatar: 'E',
-      amount: 12.30,
-      type: 'you_owe',
-      group: 'Work Team',
-      lastExpense: 'Coffee - 2 days ago',
-      status: 'pending'
-    },
-    {
-      id: 5,
-      name: 'John Smith',
-      avatar: 'J',
-      amount: 89.40,
-      type: 'owes_you',
-      group: 'Weekend Trip',
-      lastExpense: 'Movie tickets - 5 days ago',
-      status: 'settled'
-    }
-  ]
+  // Fetch data from API
+  const { data: groups, isLoading: groupsLoading } = useGroups()
+  const { data: groupBalance, isLoading: balanceLoading } = useGroupBalance(selectedGroupId || (groups?.[0]?.id || 1))
+  const { data: userDebts, isLoading: debtsLoading } = useUserDebts(user?.id || 0)
 
-  const groups = [
-    { id: 'all', name: 'All Groups' },
-    { id: 'weekend-trip', name: 'Weekend Trip' },
-    { id: 'roommates', name: 'Roommates' },
-    { id: 'work-team', name: 'Work Team' }
-  ]
+  const isLoading = groupsLoading || balanceLoading || debtsLoading
 
-  const filteredBalances = balances.filter(balance => {
-    const matchesGroup = selectedGroup === 'all' || balance.group.toLowerCase().replace(' ', '-') === selectedGroup
-    return matchesGroup
-  })
-
-  const pendingBalances = filteredBalances.filter(b => b.status === 'pending')
-  const youOweTotal = pendingBalances.filter(b => b.type === 'you_owe').reduce((sum, b) => sum + b.amount, 0)
-  const owesYouTotal = pendingBalances.filter(b => b.type === 'owes_you').reduce((sum, b) => sum + b.amount, 0)
+  // Use first group if none selected
+  const currentGroupId = selectedGroupId || (groups?.[0]?.id || 1)
+  
+  // Calculate summary from group balance data
+  const currentUserBalance = groupBalance?.userBalances?.find(ub => ub.userId === user?.id)
+  const youOweTotal = currentUserBalance?.netBalance < 0 ? Math.abs(currentUserBalance.netBalance) : 0
+  const owesYouTotal = currentUserBalance?.netBalance > 0 ? currentUserBalance.netBalance : 0
   const netBalance = owesYouTotal - youOweTotal
 
-  const settlementSuggestions = [
-    {
-      id: 1,
-      from: 'You',
-      to: 'Sarah Wilson',
-      amount: 67.50,
-      description: 'Simplify: Pay Sarah directly',
-      savings: 'Saves 2 transactions'
-    },
-    {
-      id: 2,
-      from: 'Maria Rodriguez',
-      to: 'You',
-      amount: 45.20,
-      description: 'Request payment from Maria',
-      savings: 'Outstanding since 2 days'
-    }
-  ]
+  // Generate settlement suggestions from backend settlements data
+  const settlementSuggestions = groupBalance?.settlements?.map((settlement, index) => ({
+    id: index + 1,
+    from: settlement.debtorName,
+    to: settlement.creditorName,
+    amount: settlement.amount,
+    description: `${settlement.debtorName} pays ${settlement.creditorName}`,
+    savings: 'Optimal settlement'
+  })) || []
 
   return (
     <div className="space-y-8">
@@ -118,12 +59,15 @@ export default function Balances() {
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2">
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className={`${showHistory ? 'bg-blue-600' : 'bg-white/10 hover:bg-white/20'} backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2`}
+          >
             <ClockIcon className="h-5 w-5" />
             <span>History</span>
           </button>
           <button 
-            onClick={() => setShowSettlement(true)}
+            onClick={() => setShowSettleModal(true)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2"
           >
             <BanknotesIcon className="h-5 w-5" />
@@ -195,13 +139,13 @@ export default function Balances() {
       <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
         <div className="flex items-center space-x-4">
           <UserGroupIcon className="h-5 w-5 text-gray-400" />
-          <span className="text-white font-medium">Filter by group:</span>
+          <span className="text-white font-medium">Select group:</span>
           <select
-            value={selectedGroup}
-            onChange={(e) => setSelectedGroup(e.target.value)}
+            value={currentGroupId}
+            onChange={(e) => setSelectedGroupId(Number(e.target.value))}
             className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           >
-            {groups.map(group => (
+            {groups?.map(group => (
               <option key={group.id} value={group.id} className="bg-gray-800">
                 {group.name}
               </option>
@@ -252,108 +196,177 @@ export default function Balances() {
         </div>
       </div>
 
-      {/* Balances List */}
+      {/* User Balances List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">All Balances</h2>
+          <h2 className="text-xl font-bold text-white">Group Balances</h2>
           <div className="flex space-x-2">
-            <button className="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm rounded-lg font-medium">
-              Pending ({pendingBalances.length})
-            </button>
-            <button className="px-3 py-1 bg-gray-500/20 text-gray-400 text-sm rounded-lg font-medium hover:bg-gray-500/30">
-              All ({filteredBalances.length})
-            </button>
+            <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-sm rounded-lg font-medium">
+              {groupBalance?.groupName || 'Loading...'}
+            </span>
           </div>
         </div>
 
-        {filteredBalances.map((balance) => (
-          <div key={balance.id} className="group bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+        {isLoading ? (
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+            <div className="animate-pulse flex space-x-4">
+              <div className="rounded-xl bg-gray-600 h-14 w-14"></div>
+              <div className="flex-1 space-y-2 py-1">
+                <div className="h-4 bg-gray-600 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-600 rounded w-1/2"></div>
+              </div>
+            </div>
+          </div>
+        ) : groupBalance?.userBalances?.map((userBalance) => (
+          <div key={userBalance.userId} className="group bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
             <div className="flex items-center justify-between">
               {/* Left Side - Person Info */}
               <div className="flex items-center space-x-4">
                 <div className="w-14 h-14 bg-gray-600 rounded-xl flex items-center justify-center text-xl font-bold text-white">
-                  {balance.avatar}
+                  {userBalance.userName.charAt(0)}
                 </div>
                 
                 <div>
                   <div className="flex items-center space-x-3 mb-1">
-                    <h3 className="text-xl font-bold text-white">{balance.name}</h3>
-                    {balance.status === 'settled' ? (
-                      <span className="flex items-center space-x-1 px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-md font-medium">
-                        <CheckCircleIcon className="h-3 w-3" />
-                        <span>Settled</span>
-                      </span>
-                    ) : (
-                      <span className="flex items-center space-x-1 px-2 py-1 bg-orange-500/20 text-orange-400 text-xs rounded-md font-medium">
-                        <ClockIcon className="h-3 w-3" />
-                        <span>Pending</span>
+                    <h3 className="text-xl font-bold text-white">{userBalance.userName}</h3>
+                    {userBalance.userId === user?.id && (
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-md font-medium">
+                        You
                       </span>
                     )}
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-gray-400">
-                    <span className="flex items-center space-x-1">
-                      <UserGroupIcon className="h-4 w-4" />
-                      <span>{balance.group}</span>
-                    </span>
-                    <span>{balance.lastExpense}</span>
+                    <span>Paid: ${userBalance.totalPaid.toFixed(2)}</span>
+                    <span>Owes: ${userBalance.totalOwed.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
 
-              {/* Right Side - Amount & Actions */}
+              {/* Right Side - Net Balance */}
               <div className="flex items-center space-x-4">
                 <div className="text-right">
                   <div className={`text-2xl font-black mb-1 ${
-                    balance.type === 'owes_you' ? 'text-emerald-400' : 'text-red-400'
+                    userBalance.netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}>
-                    {balance.type === 'owes_you' ? '+' : '-'}${balance.amount.toFixed(2)}
+                    {userBalance.netBalance >= 0 ? '+' : ''}${userBalance.netBalance.toFixed(2)}
                   </div>
                   <div className={`text-xs font-medium flex items-center space-x-1 ${
-                    balance.type === 'owes_you' ? 'text-emerald-400' : 'text-red-400'
+                    userBalance.netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}>
-                    {balance.type === 'owes_you' ? (
+                    {userBalance.netBalance >= 0 ? (
                       <>
                         <ArrowUpIcon className="h-3 w-3" />
-                        <span>They owe you</span>
+                        <span>Gets back</span>
                       </>
                     ) : (
                       <>
                         <ArrowDownIcon className="h-3 w-3" />
-                        <span>You owe them</span>
+                        <span>Owes</span>
                       </>
                     )}
                   </div>
                 </div>
-
-                {balance.status === 'pending' && (
-                  <div className="flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all">
-                    {balance.type === 'owes_you' ? (
-                      <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1">
-                        <PaperAirplaneIcon className="h-4 w-4" />
-                        <span>Remind</span>
-                      </button>
-                    ) : (
-                      <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center space-x-1">
-                        <CreditCardIcon className="h-4 w-4" />
-                        <span>Pay Now</span>
-                      </button>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {filteredBalances.length === 0 && (
+      {/* History Panel */}
+      {showHistory && (
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-white mb-4">Settlement History</h2>
+          <div className="space-y-3">
+            {/* Mock history data */}
+            {[
+              { id: 1, date: '2025-08-20', from: 'You', to: 'Bob Smith', amount: 25.50, status: 'completed' },
+              { id: 2, date: '2025-08-18', from: 'Alice Johnson', to: 'You', amount: 40.00, status: 'completed' },
+              { id: 3, date: '2025-08-15', from: 'You', to: 'Diana Prince', amount: 15.75, status: 'completed' },
+            ].map(settlement => (
+              <div key={settlement.id} className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                <div className="flex items-center space-x-4">
+                  <CheckCircleIcon className="h-6 w-6 text-emerald-400" />
+                  <div>
+                    <p className="text-white font-medium">
+                      {settlement.from} → {settlement.to}
+                    </p>
+                    <p className="text-gray-400 text-sm">{settlement.date}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-white font-bold">${settlement.amount.toFixed(2)}</p>
+                  <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-md">
+                    {settlement.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!isLoading && groupBalance?.userBalances?.length === 0 && (
         <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
           <ScaleIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">All settled up!</h3>
-          <p className="text-gray-400 mb-6">You don't have any outstanding balances</p>
-          <div className="text-6xl mb-4">🎉</div>
-          <p className="text-gray-400">Great job keeping your finances balanced!</p>
+          <h3 className="text-xl font-bold text-white mb-2">No balances found!</h3>
+          <p className="text-gray-400 mb-6">This group doesn't have any expenses yet</p>
+          <p className="text-gray-400">Start by adding some expenses to see balances here.</p>
+        </div>
+      )}
+
+      {/* Settlement Modal */}
+      {showSettleModal && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Settle All Balances</h3>
+              <button
+                onClick={() => setShowSettleModal(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <p className="text-gray-300">
+                This will settle all outstanding balances in the current group using the optimal settlement plan.
+              </p>
+              
+              {settlementSuggestions.map(suggestion => (
+                <div key={suggestion.id} className="bg-white/5 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white text-sm">
+                      {suggestion.from} → {suggestion.to}
+                    </span>
+                    <span className="text-emerald-400 font-medium">
+                      ${suggestion.amount.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowSettleModal(false)}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded-xl font-medium transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // Here you would call the settlement API
+                  alert('Settlement functionality would be implemented here!')
+                  setShowSettleModal(false)
+                }}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl font-medium transition-all"
+              >
+                Confirm Settlement
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -27,23 +27,21 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [showAuthModal, setShowAuthModal] = useState(false)
   
-  const { 
-    data: user, 
-    isLoading, 
-    error 
-  } = useCurrentUser()
-
-  const isAuthenticated = !!user && !error
+  // Demo mode - use a fake user for now since backend auth is not implemented
+  const demoUser: User = {
+    id: 1,
+    name: 'Alice Johnson',
+    email: 'alice@email.com',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
   
-  // Show auth modal if user is not authenticated and not loading
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      setShowAuthModal(true)
-    }
-  }, [isLoading, isAuthenticated])
+  // For demo purposes, always authenticated
+  const isAuthenticated = true
+  const isLoading = false
 
   const value: AuthContextType = {
-    user: user || null,
+    user: demoUser,
     isAuthenticated,
     isLoading,
     showAuthModal,

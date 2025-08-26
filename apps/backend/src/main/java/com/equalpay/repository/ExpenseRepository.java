@@ -76,4 +76,14 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     // Último gasto de un grupo
     @Query("SELECT e FROM Expense e WHERE e.group.id = :groupId ORDER BY e.expenseDate DESC LIMIT 1")
     Expense findLatestByGroupId(@Param("groupId") Long groupId);
+
+    // Dashboard methods
+    @Query("SELECT DISTINCT e FROM Expense e LEFT JOIN FETCH e.group LEFT JOIN FETCH e.payer LEFT JOIN FETCH e.participants LEFT JOIN FETCH e.expenseSplits es LEFT JOIN FETCH es.user WHERE (e.payer.id = :userId OR :userId IN (SELECT p.id FROM e.participants p)) ORDER BY e.createdAt DESC LIMIT :limit")
+    List<Expense> findRecentExpensesByUserWithDetails(@Param("userId") Long userId, @Param("limit") int limit);
+
+    @Query("SELECT e FROM Expense e JOIN e.participants p WHERE p.id = :userId AND e.createdAt >= :since")
+    List<Expense> findExpensesByParticipantIdSince(@Param("userId") Long userId, @Param("since") LocalDateTime since);
+
+    @Query("SELECT e FROM Expense e JOIN e.participants p WHERE p.id = :userId AND e.createdAt BETWEEN :start AND :end")
+    List<Expense> findExpensesByParticipantIdBetween(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   CreditCardIcon, 
   UserGroupIcon, 
@@ -7,81 +9,112 @@ import {
   SparklesIcon,
   FireIcon,
   ChartBarIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
+import { useDashboardStats, useRecentActivity, useCurrentUser } from '../hooks/useApi'
+import { useAuth } from '../contexts/AuthContext'
+import AddExpenseModal from '../components/AddExpenseModal'
+import CreateGroupModal from '../components/CreateGroupModal'
 
 export default function Dashboard() {
-  const stats = [
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false)
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
+  
+  const { data: statsData, isLoading: statsLoading } = useDashboardStats()
+  const { data: activity, isLoading: activityLoading } = useRecentActivity(4)
+
+  const statsCards = statsData ? [
     { 
       name: 'Total Spent', 
-      value: '$2,847.30', 
-      change: '+12.5% vs last month',
-      trend: 'up',
+      value: `$${statsData.totalSpent.toFixed(2)}`, 
+      change: `${statsData.monthlyChange.totalSpent >= 0 ? '+' : ''}${statsData.monthlyChange.totalSpent.toFixed(1)}% vs last month`,
+      trend: statsData.monthlyChange.totalSpent >= 0 ? 'up' : 'down',
       color: 'from-blue-500 to-cyan-500',
       icon: CreditCardIcon
     },
     { 
       name: 'Active Groups', 
-      value: '4', 
-      change: '+1 vs last month',
-      trend: 'up',
+      value: statsData.activeGroups.toString(), 
+      change: `${statsData.monthlyChange.activeGroups >= 0 ? '+' : ''}${statsData.monthlyChange.activeGroups} vs last month`,
+      trend: statsData.monthlyChange.activeGroups >= 0 ? 'up' : 'down',
       color: 'from-purple-500 to-pink-500',
       icon: UserGroupIcon
     },
     { 
       name: 'Net Balance', 
-      value: '-$156.80', 
-      change: '-$23.40 vs last month',
-      trend: 'down',
+      value: `${statsData.netBalance >= 0 ? '+' : ''}$${Math.abs(statsData.netBalance).toFixed(2)}`, 
+      change: `${statsData.monthlyChange.netBalance >= 0 ? '+' : ''}$${Math.abs(statsData.monthlyChange.netBalance).toFixed(2)} vs last month`,
+      trend: statsData.monthlyChange.netBalance >= 0 ? 'up' : 'down',
       color: 'from-emerald-500 to-teal-500',
       icon: ScaleIcon
     },
-  ]
+  ] : []
 
-  const recentExpenses = [
-    { 
-      description: 'Dinner at La Pasta', 
-      amount: 85.50, 
-      group: 'Weekend Trip', 
-      date: '2h ago',
-      paidBy: 'You',
-      avatar: '🍝',
-      category: 'Food'
-    },
-    { 
-      description: 'Uber to Airport', 
-      amount: 34.20, 
-      group: 'Weekend Trip', 
-      date: '4h ago',
-      paidBy: 'Maria',
-      avatar: '🚗',
-      category: 'Transport'
-    },
-    { 
-      description: 'Hotel Room', 
-      amount: 127.80, 
-      group: 'Weekend Trip', 
-      date: '6h ago',
-      paidBy: 'Alex',
-      avatar: '🏨',
-      category: 'Accommodation'
-    },
-    { 
-      description: 'Morning Coffee', 
-      amount: 12.50, 
-      group: 'Work Team', 
-      date: '1d ago',
-      paidBy: 'You',
-      avatar: '☕',
-      category: 'Food'
-    },
-  ]
+  const getCategoryIcon = (category: string) => {
+    switch (category.toLowerCase()) {
+      case 'food': return '🍽️'
+      case 'transport': return '🚗'
+      case 'accommodation': return '🏨'
+      case 'entertainment': return '🎬'
+      case 'utilities': return '⚡'
+      case 'shopping': return '🛒'
+      default: return '💰'
+    }
+  }
 
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMs = now.getTime() - date.getTime()
+    const diffInMinutes = Math.floor(diffInMs / 60000)
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    const diffInDays = Math.floor(diffInHours / 24)
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m ago`
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`
+    } else {
+      return `${diffInDays}d ago`
+    }
+  }
+
+  const recentExpenses = activity?.expenses?.map(expense => ({
+    description: expense.description,
+    amount: expense.amount,
+    group: expense.groupName,
+    date: getTimeAgo(expense.createdAt),
+    paidBy: expense.paidByName === user?.name ? 'You' : expense.paidByName,
+    avatar: getCategoryIcon(expense.category),
+    category: expense.category
+  })) || []
+
+  // Handler functions for quick actions
+  const handleAddExpense = () => {
+    setShowAddExpenseModal(true)
+  }
+  
+  const handleCreateGroup = () => {
+    setShowCreateGroupModal(true)
+  }
+  
+  const handleSettleUp = () => {
+    navigate('/balances')
+  }
+  
+  const handleAnalytics = () => {
+    // For now, navigate to expenses page
+    navigate('/expenses')
+  }
+  
   const quickActions = [
-    { name: 'Add Expense', icon: PlusIcon, color: 'from-blue-500 to-purple-600' },
-    { name: 'Create Group', icon: UserGroupIcon, color: 'from-purple-500 to-pink-500' },
-    { name: 'Settle Up', icon: BanknotesIcon, color: 'from-emerald-500 to-cyan-500' },
-    { name: 'Analytics', icon: ChartBarIcon, color: 'from-orange-500 to-red-500' },
+    { name: 'Add Expense', icon: PlusIcon, color: 'from-blue-500 to-purple-600', onClick: handleAddExpense },
+    { name: 'Create Group', icon: UserGroupIcon, color: 'from-purple-500 to-pink-500', onClick: handleCreateGroup },
+    { name: 'Settle Up', icon: BanknotesIcon, color: 'from-emerald-500 to-cyan-500', onClick: handleSettleUp },
+    { name: 'Analytics', icon: ChartBarIcon, color: 'from-orange-500 to-red-500', onClick: handleAnalytics },
   ]
 
   return (
@@ -90,7 +123,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-black text-white mb-2">
-            Good evening, Gabriel! 🌙
+            {`Good evening, ${user?.name?.split(' ')[0] || 'User'}! 🌙`}
           </h1>
           <p className="text-gray-400 text-lg">
             Here's your financial overview for today
@@ -110,33 +143,52 @@ export default function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat) => (
-          <div key={stat.name} className="relative group">
-            <div className="absolute inset-0 bg-gradient-to-r opacity-75 rounded-2xl blur group-hover:blur-md transition-all"></div>
-            <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
-                  <stat.icon className="h-6 w-6 text-white" />
+        {statsLoading ? (
+          // Loading skeleton
+          Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-500 to-gray-700 opacity-75 rounded-2xl blur"></div>
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 bg-gray-600/50 rounded-xl animate-pulse"></div>
+                  <div className="px-2 py-1 rounded-full bg-gray-600/50 animate-pulse h-6 w-20"></div>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  stat.trend === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
-                }`}>
-                  {stat.change}
+                <div>
+                  <div className="bg-gray-600/50 rounded h-4 w-20 mb-2 animate-pulse"></div>
+                  <div className="bg-gray-600/50 rounded h-8 w-32 animate-pulse"></div>
                 </div>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm font-medium mb-1">{stat.name}</p>
-                <p className="text-3xl font-black text-white">{stat.value}</p>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          statsCards.map((stat) => (
+            <div key={stat.name} className="relative group">
+              <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} opacity-75 rounded-2xl blur group-hover:blur-md transition-all`}></div>
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                    <stat.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    stat.trend === 'up' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                  }`}>
+                    {stat.change}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm font-medium mb-1">{stat.name}</p>
+                  <p className="text-3xl font-black text-white">{stat.value}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {quickActions.map((action) => (
-          <button key={action.name} className="group relative">
+          <button key={action.name} onClick={action.onClick} className="group relative">
             <div className={`absolute inset-0 bg-gradient-to-r ${action.color} opacity-75 rounded-xl blur-sm group-hover:blur-none transition-all`}></div>
             <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all text-center">
               <action.icon className="h-6 w-6 text-white mx-auto mb-2" />
@@ -156,28 +208,53 @@ export default function Dashboard() {
               <button className="text-sm text-gray-400 hover:text-white">View all</button>
             </div>
             <div className="space-y-4">
-              {recentExpenses.map((expense, index) => (
-                <div key={index} className="group flex items-center space-x-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
-                  <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center text-xl">
-                    {expense.avatar}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <p className="font-semibold text-white">{expense.description}</p>
-                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-md font-medium">
-                        {expense.category}
-                      </span>
+              {activityLoading ? (
+                // Loading skeleton for recent expenses
+                Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="flex items-center space-x-4 p-4 rounded-xl bg-white/5">
+                    <div className="w-12 h-12 bg-gray-600/50 rounded-xl animate-pulse"></div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <div className="bg-gray-600/50 rounded h-5 w-32 animate-pulse"></div>
+                        <div className="bg-gray-600/50 rounded h-4 w-16 animate-pulse"></div>
+                      </div>
+                      <div className="bg-gray-600/50 rounded h-4 w-48 animate-pulse"></div>
                     </div>
-                    <p className="text-sm text-gray-400">
-                      {expense.group} • Paid by {expense.paidBy} • {expense.date}
-                    </p>
+                    <div className="text-right">
+                      <div className="bg-gray-600/50 rounded h-5 w-16 mb-1 animate-pulse"></div>
+                      <div className="bg-gray-600/50 rounded h-3 w-12 animate-pulse"></div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-white text-lg">${expense.amount.toFixed(2)}</p>
-                    <p className="text-xs text-gray-400">per person</p>
+                ))
+              ) : recentExpenses.length > 0 ? (
+                recentExpenses.map((expense, index) => (
+                  <div key={index} className="group flex items-center space-x-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+                    <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center text-xl">
+                      {expense.avatar}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <p className="font-semibold text-white">{expense.description}</p>
+                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-md font-medium">
+                          {expense.category}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400">
+                        {expense.group} • Paid by {expense.paidBy} • {expense.date}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-white text-lg">${expense.amount.toFixed(2)}</p>
+                      <p className="text-xs text-gray-400">total amount</p>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">No recent expenses to show</p>
+                  <p className="text-sm text-gray-500 mt-1">Start by adding your first expense</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -188,20 +265,43 @@ export default function Dashboard() {
           <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
             <h3 className="text-lg font-bold text-white mb-4">This Month</h3>
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-400">You paid</span>
-                <span className="text-white font-semibold">$1,247.30</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Your share</span>
-                <span className="text-white font-semibold">$1,090.50</span>
-              </div>
-              <div className="border-t border-white/10 pt-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">You are owed</span>
-                  <span className="text-emerald-400 font-bold">+$156.80</span>
-                </div>
-              </div>
+              {statsLoading ? (
+                <>
+                  <div className="flex justify-between">
+                    <div className="bg-gray-600/50 rounded h-4 w-20 animate-pulse"></div>
+                    <div className="bg-gray-600/50 rounded h-4 w-24 animate-pulse"></div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="bg-gray-600/50 rounded h-4 w-20 animate-pulse"></div>
+                    <div className="bg-gray-600/50 rounded h-4 w-24 animate-pulse"></div>
+                  </div>
+                  <div className="border-t border-white/10 pt-3">
+                    <div className="flex justify-between">
+                      <div className="bg-gray-600/50 rounded h-4 w-24 animate-pulse"></div>
+                      <div className="bg-gray-600/50 rounded h-4 w-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Total Spent</span>
+                    <span className="text-white font-semibold">${statsData?.totalSpent?.toFixed(2) || '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Active Groups</span>
+                    <span className="text-white font-semibold">{statsData?.activeGroups || 0}</span>
+                  </div>
+                  <div className="border-t border-white/10 pt-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">{statsData?.netBalance && statsData.netBalance >= 0 ? 'You are owed' : 'You owe'}</span>
+                      <span className={`font-bold ${statsData?.netBalance && statsData.netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {statsData?.netBalance && statsData.netBalance >= 0 ? '+' : ''}${Math.abs(statsData?.netBalance || 0).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -233,6 +333,26 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Add Expense Modal */}
+      <AddExpenseModal
+        isOpen={showAddExpenseModal}
+        onClose={() => setShowAddExpenseModal(false)}
+        onSuccess={() => {
+          setShowAddExpenseModal(false)
+          // Could add a toast notification here
+        }}
+      />
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isOpen={showCreateGroupModal}
+        onClose={() => setShowCreateGroupModal(false)}
+        onSuccess={() => {
+          setShowCreateGroupModal(false)
+          // Could add a toast notification here
+        }}
+      />
     </div>
   )
 }
