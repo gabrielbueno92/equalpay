@@ -47,8 +47,9 @@ function Navigation() {
       {/* Blur background */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl"></div>
       
-      <div className="relative z-10 p-6">
-        <div className="flex items-center justify-between mb-8">
+      <div className="relative z-10 p-6 flex flex-col h-full">
+        {/* Logo Header */}
+        <div className="flex items-center justify-center mb-8">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <SparklesIcon className="h-6 w-6 text-white" />
@@ -57,24 +58,10 @@ function Navigation() {
               EqualPay
             </h1>
           </div>
-          
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full shadow-lg flex items-center justify-center">
-              <span className="text-white text-sm font-bold">
-                {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
-              </span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-1 hover:bg-white/10 rounded-lg transition-all text-gray-400 hover:text-white"
-              title="Logout"
-            >
-              <ArrowRightOnRectangleIcon className="h-4 w-4" />
-            </button>
-          </div>
         </div>
         
-        <div className="space-y-2">
+        {/* Navigation */}
+        <div className="flex-1 space-y-2">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
             return (
@@ -99,11 +86,38 @@ function Navigation() {
           })}
         </div>
         
-        <div className="mt-8 pt-6 border-t border-white/10">
+        {/* Premium Section */}
+        <div className="mt-auto pt-6 border-t border-white/10">
           <div className="text-xs text-gray-400 mb-2">Premium</div>
-          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-xl p-3">
+          <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 rounded-xl p-3 mb-4">
             <div className="text-sm font-medium text-yellow-300 mb-1">⭐ Upgrade to Pro</div>
             <div className="text-xs text-gray-400">Unlock advanced features</div>
+          </div>
+          
+          {/* User Profile */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full shadow-lg flex items-center justify-center">
+                <span className="text-white text-sm font-bold">
+                  {user?.name?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <div className="text-white font-medium text-sm truncate">
+                  {user?.name || 'User'}
+                </div>
+                <div className="text-gray-400 text-xs truncate">
+                  {user?.email || 'user@example.com'}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="p-2 hover:bg-white/10 rounded-lg transition-all text-gray-400 hover:text-white flex-shrink-0"
+              title="Logout"
+            >
+              <ArrowRightOnRectangleIcon className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>

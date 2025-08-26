@@ -12,7 +12,7 @@ import {
   BanknotesIcon,
   ClockIcon
 } from '@heroicons/react/24/outline'
-import { useDashboardStats, useRecentActivity, useCurrentUser } from '../hooks/useApi'
+import { useDashboardStats, useRecentActivity, useCurrentUser, useGroups } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 import AddExpenseModal from '../components/AddExpenseModal'
 import CreateGroupModal from '../components/CreateGroupModal'
@@ -25,6 +25,7 @@ export default function Dashboard() {
   
   const { data: statsData, isLoading: statsLoading } = useDashboardStats()
   const { data: activity, isLoading: activityLoading } = useRecentActivity(4)
+  const { data: groups, isLoading: groupsLoading } = useGroups()
 
   const statsCards = statsData ? [
     { 
@@ -33,7 +34,8 @@ export default function Dashboard() {
       change: `${statsData.monthlyChange.totalSpent >= 0 ? '+' : ''}${statsData.monthlyChange.totalSpent.toFixed(1)}% vs last month`,
       trend: statsData.monthlyChange.totalSpent >= 0 ? 'up' : 'down',
       color: 'from-blue-500 to-cyan-500',
-      icon: CreditCardIcon
+      icon: CreditCardIcon,
+      onClick: () => navigate('/expenses')
     },
     { 
       name: 'Active Groups', 
@@ -41,7 +43,8 @@ export default function Dashboard() {
       change: `${statsData.monthlyChange.activeGroups >= 0 ? '+' : ''}${statsData.monthlyChange.activeGroups} vs last month`,
       trend: statsData.monthlyChange.activeGroups >= 0 ? 'up' : 'down',
       color: 'from-purple-500 to-pink-500',
-      icon: UserGroupIcon
+      icon: UserGroupIcon,
+      onClick: () => navigate('/groups')
     },
     { 
       name: 'Net Balance', 
@@ -49,7 +52,8 @@ export default function Dashboard() {
       change: `${statsData.monthlyChange.netBalance >= 0 ? '+' : ''}$${Math.abs(statsData.monthlyChange.netBalance).toFixed(2)} vs last month`,
       trend: statsData.monthlyChange.netBalance >= 0 ? 'up' : 'down',
       color: 'from-emerald-500 to-teal-500',
-      icon: ScaleIcon
+      icon: ScaleIcon,
+      onClick: () => navigate('/balances')
     },
   ] : []
 
@@ -63,6 +67,29 @@ export default function Dashboard() {
       case 'shopping': return '🛒'
       default: return '💰'
     }
+  }
+
+  const getGroupIcon = (groupName: string) => {
+    const name = groupName.toLowerCase()
+    if (name.includes('trip') || name.includes('travel') || name.includes('vacation')) return '✈️'
+    if (name.includes('room') || name.includes('home') || name.includes('house')) return '🏠'
+    if (name.includes('work') || name.includes('office') || name.includes('team')) return '💼'
+    if (name.includes('food') || name.includes('restaurant') || name.includes('dinner')) return '🍽️'
+    if (name.includes('family') || name.includes('friends')) return '👨‍👩‍👧‍👦'
+    if (name.includes('party') || name.includes('celebration')) return '🎉'
+    return '👥'
+  }
+
+  const getGroupColor = (index: number) => {
+    const colors = [
+      'from-blue-500 to-cyan-500',
+      'from-purple-500 to-pink-500', 
+      'from-emerald-500 to-teal-500',
+      'from-orange-500 to-red-500',
+      'from-yellow-500 to-orange-500',
+      'from-pink-500 to-rose-500'
+    ]
+    return colors[index % colors.length]
   }
 
   const getTimeAgo = (dateString: string) => {
@@ -109,6 +136,32 @@ export default function Dashboard() {
     // For now, navigate to expenses page
     navigate('/expenses')
   }
+
+  const handleExportData = () => {
+    // Create CSV export functionality
+    if (!statsData) return
+    
+    const csvData = [
+      ['Metric', 'Value'],
+      ['Total Spent', `$${statsData.totalSpent.toFixed(2)}`],
+      ['Active Groups', statsData.activeGroups.toString()],
+      ['Net Balance', `$${statsData.netBalance.toFixed(2)}`],
+      ['Monthly Change - Total Spent', `${statsData.monthlyChange.totalSpent.toFixed(1)}%`],
+      ['Monthly Change - Active Groups', statsData.monthlyChange.activeGroups.toString()],
+      ['Monthly Change - Net Balance', `$${statsData.monthlyChange.netBalance.toFixed(2)}`]
+    ]
+    
+    const csvContent = csvData.map(row => row.join(',')).join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `equalpay-dashboard-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
   
   const quickActions = [
     { name: 'Add Expense', icon: PlusIcon, color: 'from-blue-500 to-purple-600', onClick: handleAddExpense },
@@ -123,20 +176,20 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-black text-white mb-2">
-            {`Good evening, ${user?.name?.split(' ')[0] || 'User'}! 🌙`}
+            {`Hello, ${user?.name?.split(' ')[0] || 'User'}! 👋`}
           </h1>
           <p className="text-gray-400 text-lg">
             Here's your financial overview for today
           </p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2">
+          <button 
+            onClick={handleExportData}
+            disabled={!statsData}
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <DocumentArrowDownIcon className="h-5 w-5" />
             <span>Export Data</span>
-          </button>
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2">
-            <PlusIcon className="h-5 w-5" />
-            <span>Add Expense</span>
           </button>
         </div>
       </div>
@@ -162,11 +215,11 @@ export default function Dashboard() {
           ))
         ) : (
           statsCards.map((stat) => (
-            <div key={stat.name} className="relative group">
+            <div key={stat.name} className="relative group cursor-pointer" onClick={stat.onClick}>
               <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} opacity-75 rounded-2xl blur group-hover:blur-md transition-all`}></div>
-              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all group-hover:scale-[1.02] transform duration-200">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                  <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
                     <stat.icon className="h-6 w-6 text-white" />
                   </div>
                   <div className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -178,6 +231,10 @@ export default function Dashboard() {
                 <div>
                   <p className="text-gray-400 text-sm font-medium mb-1">{stat.name}</p>
                   <p className="text-3xl font-black text-white">{stat.value}</p>
+                </div>
+                {/* Click indicator */}
+                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-2 h-2 bg-white/60 rounded-full"></div>
                 </div>
               </div>
             </div>
@@ -205,7 +262,12 @@ export default function Dashboard() {
           <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Recent Activity</h2>
-              <button className="text-sm text-gray-400 hover:text-white">View all</button>
+              <button 
+                onClick={() => navigate('/expenses')}
+                className="text-sm text-gray-400 hover:text-white transition-all"
+              >
+                View all
+              </button>
             </div>
             <div className="space-y-4">
               {activityLoading ? (
@@ -305,32 +367,50 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Top Groups */}
+          {/* Your Active Groups */}
           <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
             <h3 className="text-lg font-bold text-white mb-4">Your Active Groups</h3>
             <div className="space-y-3">
-              {[
-                { name: 'Weekend Trip', icon: 'airplane', activity: '5 expenses today', color: 'from-blue-500 to-cyan-500' },
-                { name: 'Roommates', icon: 'home', activity: '2 expenses this week', color: 'from-purple-500 to-pink-500' },
-                { name: 'Work Team', icon: 'utensils', activity: '1 expense yesterday', color: 'from-emerald-500 to-teal-500' }
-              ].map((group, index) => (
-                <div key={group.name} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-r ${group.color}`}>
-                      {group.icon === 'airplane' && <span className="text-sm">✈️</span>}
-                      {group.icon === 'home' && <span className="text-sm">🏠</span>}
-                      {group.icon === 'utensils' && <span className="text-sm">🍽️</span>}
+              {groupsLoading ? (
+                // Loading skeleton
+                Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-lg bg-gray-600/50 animate-pulse"></div>
+                      <div>
+                        <div className="bg-gray-600/50 rounded h-4 w-20 mb-1 animate-pulse"></div>
+                        <div className="bg-gray-600/50 rounded h-3 w-16 animate-pulse"></div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-white font-medium text-sm">{group.name}</div>
-                      <div className="text-gray-400 text-xs">{group.activity}</div>
-                    </div>
+                    <div className="w-2 h-2 bg-gray-600/50 rounded-full animate-pulse"></div>
                   </div>
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                ))
+              ) : groups && groups.length > 0 ? (
+                groups.slice(0, 5).map((group, index) => (
+                  <div key={group.id} className="flex items-center justify-between cursor-pointer hover:bg-white/5 rounded-lg p-2 transition-all">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-r ${getGroupColor(index)}`}>
+                        <span className="text-sm">{getGroupIcon(group.name)}</span>
+                      </div>
+                      <div>
+                        <div className="text-white font-medium text-sm">{group.name}</div>
+                        <div className="text-gray-400 text-xs">
+                          {group.members?.length || 0} members • Created {getTimeAgo(group.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-400 text-sm">No groups yet</p>
+                  <p className="text-gray-500 text-xs mt-1">Create your first group to get started</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
+
         </div>
       </div>
 
