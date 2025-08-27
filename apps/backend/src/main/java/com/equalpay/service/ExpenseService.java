@@ -125,7 +125,7 @@ public class ExpenseService {
             expense.setParticipants(participants);
         } else {
             // Si no se especifican participantes, incluir a todos los miembros del grupo
-            expense.setParticipants(group.getMembers());
+            expense.setParticipants(new HashSet<>(group.getMembers()));
         }
 
         // Guardar el gasto

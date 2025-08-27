@@ -4,10 +4,12 @@ import com.equalpay.dto.BalanceDTO;
 import com.equalpay.entity.Expense;
 import com.equalpay.entity.ExpenseSplit;
 import com.equalpay.entity.Group;
+import com.equalpay.entity.Settlement;
 import com.equalpay.entity.User;
 import com.equalpay.repository.ExpenseRepository;
 import com.equalpay.repository.ExpenseSplitRepository;
 import com.equalpay.repository.GroupRepository;
+import com.equalpay.repository.SettlementRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,9 @@ public class BalanceService {
 
     @Autowired
     private GroupRepository groupRepository;
+    
+    @Autowired
+    private SettlementRepository settlementRepository;
 
     public BalanceDTO calculateGroupBalance(Long groupId) {
         Group group = groupRepository.findById(groupId)
@@ -77,6 +82,25 @@ public class BalanceService {
             BalanceDTO.UserBalanceDTO userBalance = userBalances.get(userId);
             if (userBalance != null) {
                 userBalance.setTotalOwed(userBalance.getTotalOwed().add(split.getAmountOwed()));
+            }
+        }
+
+        // Ajustar balances por settlements (pagos realizados)
+        // Un settlement representa que alguien pagó una deuda pendiente
+        List<Settlement> completedSettlements = settlementRepository.findByGroupIdOrderBySettledAtDesc(groupId);
+        for (Settlement settlement : completedSettlements) {
+            Long debtorId = settlement.getDebtor().getId();
+            Long creditorId = settlement.getCreditor().getId();
+            BigDecimal settledAmount = settlement.getAmount();
+            
+            BalanceDTO.UserBalanceDTO debtorBalance = userBalances.get(debtorId);
+            BalanceDTO.UserBalanceDTO creditorBalance = userBalances.get(creditorId);
+            
+            if (debtorBalance != null && creditorBalance != null) {
+                // El deudor efectivamente "pagó" esta cantidad adicional
+                debtorBalance.setTotalPaid(debtorBalance.getTotalPaid().add(settledAmount));
+                // El acreedor efectivamente "recibió" esta cantidad, por lo que se reduce lo que el acreedor debe al grupo
+                creditorBalance.setTotalOwed(creditorBalance.getTotalOwed().subtract(settledAmount));
             }
         }
 
