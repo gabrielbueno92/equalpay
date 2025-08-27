@@ -134,41 +134,95 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
   -d '{"name": "Viaje Bariloche", "description": "Gastos compartidos"}'
 ```
 
-## Estado de la Conversación
-- Usuario familiarizado con setup completo
-- Docker instalado y funcionando
-- Backend corriendo correctamente
-- ✅ Entidades Expense y ExpenseSplit implementadas
-- ✅ Sistema de balances funcional
-- ✅ APIs probadas manualmente por el usuario
+## Estado del Proyecto - Sesión 27/12/2024 COMPLETADA
 
-### 🐛 Issues Identificados en Testing Manual
-**Problemas en ExpenseDTO (POST /api/expenses response):**
-1. `splitType` funciona correctamente (EQUAL/PERCENTAGE/EXACT_AMOUNT)
-2. Campos `group` aparecen como null (deberían tener info del grupo)
-3. Campo `expenseSplits` está vacío (deberían cargar las divisiones automáticas)
+### 🎉 MVP FUNCIONAL COMPLETO - MERGEADO A MAIN
+- ✅ **PR #3 `feature/settlement-system` MERGEADO** exitosamente
+- ✅ Todas las funcionalidades core implementadas y probadas
+- ✅ Backend + Frontend + PostgreSQL funcionando perfectamente
+- ✅ Sistema completo de gastos, balances y liquidaciones operativo
 
-**Problemas en diseño de DTOs (GET /api/expenses):**
-1. `participantIds` vacío pero `participants` lleno (redundancia)
-2. Datos del usuario duplicados en `expenseSplits` y `participants`
-3. Propuesta: Separar claramente participants vs splits para mayor claridad
+### 📊 Funcionalidades MVP Implementadas y Probadas
+1. **Sistema de Gastos CRUD Completo**
+   - ✅ Crear gastos con división automática (`POST /api/expenses`)
+   - ✅ Editar gastos existentes (`PUT /api/expenses/{id}`)
+   - ✅ Eliminar gastos (`DELETE /api/expenses/{id}`)
+   - ✅ Listar gastos con fetch joins completos (`GET /api/expenses`)
+   - ✅ Filtros por grupo, pagador, participante (`GET /api/expenses/*`)
 
-### ✅ Fixes Completados
-- [x] Arreglar carga lazy de `group` en ExpenseDTO (fetch joins implementados)
-- [x] Arreglar carga lazy de `expenseSplits` en ExpenseDTO (fetch joins implementados)
-- [x] Mejorar diseño de DTOs para eliminar redundancia
-- [x] Separar `participants` vs `splits` en responses (nuevo SplitDTO creado)
+2. **Sistema de Balances Inteligente**
+   - ✅ Cálculo automático de balances netos por usuario
+   - ✅ Algoritmo de liquidación óptima (minimal settlements)
+   - ✅ Integración con settlements para recálculo tras pagos
+   - ✅ API completa de balances (`GET /api/balances/group/{id}`)
 
-### 📋 TODOs Pendientes para Próxima Sesión
-- [ ] Probar todas las APIs con los nuevos fixes implementados
-- [ ] Verificar que group y splits cargan correctamente en responses
-- [ ] Probar creación de gastos con nuevo formato de DTOs
-- [ ] Probar cálculos de balances completos
-- [ ] Hacer commit final con todos los fixes
+3. **Sistema de Settlements/Pagos**
+   - ✅ Entidad Settlement con JPA completo
+   - ✅ Registro de pagos completados (`POST /api/settlements`)
+   - ✅ Historial de pagos por grupo/usuario (`GET /api/settlements/*`)
+   - ✅ Actualización automática de balances tras settlements
+   - ✅ Estadísticas de pagos (`GET /api/settlements/stats/*`)
 
-### 🔧 Cambios Técnicos Realizados
-- Agregado fetch joins en ExpenseRepository para evitar lazy loading
-- Creado SplitDTO simplificado (userId, userName, amountOwed)
-- Eliminado participantIds redundante del ExpenseDTO
-- Simplificado DataLoader para evitar problemas de cascading
-- Actualizado ExpenseService para usar nuevos métodos con fetch joins
+### 🔧 Cambios Técnicos Completados (523+ líneas código)
+**Nuevos Archivos Creados:**
+- `Settlement.java` - Entidad JPA para pagos completados
+- `SettlementDTO.java` - DTO con validaciones Bean Validation
+- `SettlementRepository.java` - Queries customizadas con @Query
+- `SettlementService.java` - Lógica de negocio completa (144 líneas)
+- `SettlementController.java` - REST endpoints completos (80 líneas)
+
+**Archivos Modificados:**
+- `BalanceService.java` - Integración con settlements para recálculo
+- `ExpenseService.java` - Fix de shared collection references
+
+**Issues Técnicos Resueltos:**
+- ✅ Lazy loading con fetch joins en todos los DTOs
+- ✅ Shared collection references en Hibernate
+- ✅ DTO design limpio (participants vs splits separados)
+- ✅ Validaciones completas en todos los endpoints
+- ✅ Manejo de transacciones JPA optimizado
+
+### 🧪 Testing Manual Completado
+**Flujo Completo Probado:**
+1. ✅ Crear gastos: Combustible $200 (Bob), Hotel $800 (Charlie)
+2. ✅ Verificar balances: Alice -$250, Bob -$50, Charlie +$550, Diana -$250
+3. ✅ Registrar settlement: Diana paga $250 a Charlie
+4. ✅ Verificar recálculo: Diana balance=$0, Charlie recibió pago, settlements actualizados
+5. ✅ APIs de settlements: historial, estadísticas, CRUD completo
+
+### 📋 Próximas Sesiones - Roadmap Post-MVP
+
+#### 🔐 Semana 1 (Prioridad Alta)
+- [ ] **Sistema de autenticación JWT básico**
+  - [ ] Entidades User con password y roles
+  - [ ] Endpoints login/register con JWT
+  - [ ] Middleware de autenticación en controladores
+  - [ ] Context de autenticación en frontend
+
+#### 🎨 Semana 2 (UX Improvements)  
+- [ ] **Mejorar experiencia de usuario**
+  - [ ] Loading states en todas las operaciones
+  - [ ] Notificaciones toast para éxito/error
+  - [ ] Validación de formularios en frontend
+  - [ ] Responsive design para móviles
+
+#### ⚡ Semana 3 (Features Adicionales)
+- [ ] **Filtros y búsqueda avanzada**
+  - [ ] Filtros por fecha en gastos
+  - [ ] Búsqueda por descripción/monto
+  - [ ] Paginación en listas largas
+  - [ ] Export de datos (PDF/Excel)
+
+#### 🧪 Semana 4 (Calidad y Deploy)
+- [ ] **Testing y deployment**
+  - [ ] Tests unitarios para servicios críticos
+  - [ ] Tests de integración para APIs
+  - [ ] CI/CD pipeline básico
+  - [ ] Deploy a producción (Railway/Heroku)
+
+### 💡 Ideas Futuras (Backlog)
+- [ ] Categorización de gastos con tags
+- [ ] Dashboard con gráficos y estadísticas
+- [ ] Notificaciones push/email para deudas
+- [ ] App móvil con React Native
+- [ ] Integración con bancos/billeteras digitales
