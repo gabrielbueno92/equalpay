@@ -104,7 +104,13 @@ public class ExpenseService {
         expense.setNotes(expenseDTO.getNotes());
         
         if (expenseDTO.getExpenseDate() != null) {
-            expense.setExpenseDate(expenseDTO.getExpenseDate());
+            // Validar que la fecha del gasto no sea futura
+            LocalDateTime expenseDate = expenseDTO.getExpenseDate();
+            LocalDateTime now = LocalDateTime.now();
+            if (expenseDate.isAfter(now)) {
+                throw new IllegalArgumentException("La fecha del gasto no puede ser futura");
+            }
+            expense.setExpenseDate(expenseDate);
         }
 
         // Agregar participantes (usando IDs de la lista de participants si está disponible)
@@ -148,8 +154,17 @@ public class ExpenseService {
         expense.setNotes(expenseDTO.getNotes());
         
         if (expenseDTO.getExpenseDate() != null) {
-            expense.setExpenseDate(expenseDTO.getExpenseDate());
+            // Validar que la fecha del gasto no sea futura
+            LocalDateTime expenseDate = expenseDTO.getExpenseDate();
+            LocalDateTime now = LocalDateTime.now();
+            if (expenseDate.isAfter(now)) {
+                throw new IllegalArgumentException("La fecha del gasto no puede ser futura");
+            }
+            expense.setExpenseDate(expenseDate);
         }
+
+        // Note: Pagador (payer) no se actualiza en edición para mantener integridad
+        // Si se requiere cambiar el pagador, se debe eliminar y crear un nuevo gasto
 
         // Actualizar participantes si se especifican
         if (expenseDTO.getParticipants() != null) {
@@ -157,6 +172,13 @@ public class ExpenseService {
                     .map(userDTO -> userRepository.findById(userDTO.getId())
                             .orElseThrow(() -> new IllegalArgumentException("Participante con ID " + userDTO.getId() + " no encontrado")))
                     .collect(Collectors.toSet());
+            
+            // Validar que todos los participantes son miembros del grupo
+            for (User participant : participants) {
+                if (!expense.getGroup().getMembers().contains(participant)) {
+                    throw new IllegalArgumentException("Todos los participantes deben ser miembros del grupo");
+                }
+            }
             
             expense.setParticipants(participants);
         }

@@ -1,13 +1,15 @@
-import { useState, Fragment } from 'react'
+import { useState, Fragment, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import { useGroups, useCreateExpense } from '../hooks/useApi'
+import { useGroups, useUpdateExpense } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
+import type { Expense } from '../services/api'
 
-interface AddExpenseModalProps {
+interface EditExpenseModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
+  expense: Expense | null
 }
 
 interface ExpenseFormData {
@@ -21,10 +23,10 @@ interface ExpenseFormData {
   selectAllParticipants: boolean
 }
 
-export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpenseModalProps) {
+export default function EditExpenseModal({ isOpen, onClose, onSuccess, expense }: EditExpenseModalProps) {
   const { user } = useAuth()
   const { data: groups, isLoading: groupsLoading } = useGroups()
-  const createExpenseMutation = useCreateExpense()
+  const updateExpenseMutation = useUpdateExpense()
   
   const [formData, setFormData] = useState<ExpenseFormData>({
     description: '',
@@ -37,10 +39,35 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
     selectAllParticipants: true
   })
 
+  // Update form data when expense changes
+  useEffect(() => {
+    if (expense) {
+      const participantIds = expense.participants?.map(p => p.id) || []
+      const selectedGroup = groups?.find(g => g.id === expense.groupId)
+      const isAllParticipants = selectedGroup ? 
+        participantIds.length === selectedGroup.members.length &&
+        participantIds.every(id => selectedGroup.members.some(m => m.id === id))
+        : false
+
+      setFormData({
+        description: expense.description,
+        amount: expense.amount.toString(),
+        groupId: expense.groupId,
+        participantIds: participantIds,
+        splitType: expense.splitType,
+        paidById: expense.payerId,
+        expenseDate: expense.expenseDate.split('T')[0], // Extract date part only
+        selectAllParticipants: isAllParticipants
+      })
+    }
+  }, [expense, groups])
+
   const selectedGroup = groups?.find(g => g.id === formData.groupId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!expense) return
     
     const amount = parseFloat(formData.amount)
     if (!formData.description || !formData.amount || amount <= 0) {
@@ -49,35 +76,25 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
     }
 
     try {
-      await createExpenseMutation.mutateAsync({
-        description: formData.description,
-        amount: parseFloat(formData.amount),
-        groupId: formData.groupId,
-        splitType: formData.splitType,
-        paidById: formData.paidById,
-        expenseDate: formData.expenseDate,
-        participantIds: formData.selectAllParticipants 
-          ? selectedGroup?.members.map(m => m.id) || []
-          : formData.participantIds
+      await updateExpenseMutation.mutateAsync({
+        id: expense.id,
+        updateData: {
+          description: formData.description,
+          amount: parseFloat(formData.amount),
+          // groupId and paidById are not sent - they remain unchanged
+          splitType: formData.splitType,
+          expenseDate: new Date(formData.expenseDate + 'T12:00:00').toISOString(),
+          participantIds: formData.selectAllParticipants 
+            ? selectedGroup?.members.map(m => m.id) || []
+            : formData.participantIds
+        }
       })
       
       onSuccess?.()
       onClose()
-      
-      // Reset form
-      setFormData({
-        description: '',
-        amount: '',
-        groupId: groups?.[0]?.id || 1,
-        participantIds: [],
-        splitType: 'EQUAL',
-        paidById: user?.id || 1,
-        expenseDate: new Date().toISOString(),
-        selectAllParticipants: true
-      })
     } catch (error) {
-      console.error('Error creating expense:', error)
-      alert('Error creating expense. Please try again.')
+      console.error('Error updating expense:', error)
+      alert('Error updating expense. Please try again.')
     }
   }
 
@@ -103,7 +120,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
     }))
   }
 
-  if (groupsLoading) {
+  if (groupsLoading || !expense) {
     return null
   }
 
@@ -136,7 +153,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-6">
                   <Dialog.Title className="text-xl font-bold text-white">
-                    Add New Expense
+                    Edit Expense
                   </Dialog.Title>
                   <button
                     onClick={onClose}
@@ -179,23 +196,15 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                     />
                   </div>
 
-                  {/* Group */}
+                  {/* Group - Read Only */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Group *
+                      Group
                     </label>
-                    <select
-                      value={formData.groupId}
-                      onChange={(e) => setFormData(prev => ({ ...prev, groupId: parseInt(e.target.value), participantIds: [], selectAllParticipants: true }))}
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      required
-                    >
-                      {groups?.map(group => (
-                        <option key={group.id} value={group.id} className="bg-gray-800">
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-gray-300">
+                      {selectedGroup?.name || 'Unknown Group'}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Group cannot be changed when editing</p>
                   </div>
 
                   {/* Split Type */}
@@ -214,6 +223,17 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                     </select>
                   </div>
 
+                  {/* Paid By - Read Only */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Paid By
+                    </label>
+                    <div className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-gray-300">
+                      {expense?.payer?.id === user?.id ? `${expense?.payer?.name} (You)` : expense?.payer?.name || 'Unknown'}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">Payer cannot be changed when editing</p>
+                  </div>
+
                   {/* Date */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -222,8 +242,8 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                     <input
                       type="date"
                       max={new Date().toISOString().split('T')[0]}
-                      value={formData.expenseDate.split('T')[0]}
-                      onChange={(e) => setFormData(prev => ({ ...prev, expenseDate: new Date(e.target.value + 'T12:00:00').toISOString() }))}
+                      value={formData.expenseDate}
+                      onChange={(e) => setFormData(prev => ({ ...prev, expenseDate: e.target.value }))}
                       className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     />
                     <p className="text-xs text-gray-400 mt-1">Expenses can only be recorded for past dates or today</p>
@@ -286,10 +306,10 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                     </button>
                     <button
                       type="submit"
-                      disabled={createExpenseMutation.isPending}
+                      disabled={updateExpenseMutation.isPending}
                       className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all disabled:opacity-50"
                     >
-                      {createExpenseMutation.isPending ? 'Creating...' : 'Create Expense'}
+                      {updateExpenseMutation.isPending ? 'Updating...' : 'Update Expense'}
                     </button>
                   </div>
                 </form>

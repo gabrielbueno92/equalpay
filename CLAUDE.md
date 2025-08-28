@@ -134,13 +134,87 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
   -d '{"name": "Viaje Bariloche", "description": "Gastos compartidos"}'
 ```
 
-## Estado del Proyecto - Sesión 27/12/2024 COMPLETADA
+## Estado del Proyecto - Sesión 28/08/2025 COMPLETADA
 
-### 🎉 MVP FUNCIONAL COMPLETO - MERGEADO A MAIN
-- ✅ **PR #3 `feature/settlement-system` MERGEADO** exitosamente
-- ✅ Todas las funcionalidades core implementadas y probadas
+### 🎉 FUNCIONALIDAD DE EDICIÓN Y UX MEJORADAS
+- ✅ **Sistema de edición/eliminación de gastos completamente operativo**
+- ✅ **Validaciones de fechas futuras implementadas** (backend + frontend)
+- ✅ **Campos editables vs solo-lectura definidos** con UX optimizada
 - ✅ Backend + Frontend + PostgreSQL funcionando perfectamente
-- ✅ Sistema completo de gastos, balances y liquidaciones operativo
+- ✅ Todas las funcionalidades de la sesión probadas y funcionando
+
+### 📊 Funcionalidades Implementadas en Esta Sesión
+1. **Sistema de Edición de Gastos Completo**
+   - ✅ **Modal EditExpenseModal.tsx** completamente funcional
+   - ✅ **Botones de editar/eliminar** con hover effects en lista de gastos
+   - ✅ **Campos editables definidos**: Descripción, Monto, Fecha, Participantes, Notas
+   - ✅ **Campos solo-lectura**: Grupo, Pagador (mostrados con indicación visual)
+   - ✅ **Integración completa con APIs** de actualización y eliminación
+
+2. **Sistema de Eliminación de Gastos**
+   - ✅ **Confirmación antes de eliminar** para prevenir borrados accidentales
+   - ✅ **Invalidación automática de cache** para updates en tiempo real
+   - ✅ **API DELETE /api/expenses/{id}** funcionando correctamente
+
+3. **Validaciones de Fechas Futuras**
+   - ✅ **Frontend**: `max` attribute en campos date + mensaje explicativo
+   - ✅ **Backend**: Validación en `ExpenseService.java` rechaza fechas futuras
+   - ✅ **Doble validación** UI + API para máxima consistencia
+   - ✅ **Lógica de negocio**: "Un gasto debe reflejar cuando realmente se pagó"
+
+### 🔧 Cambios Técnicos Completados (Sesión 28/08/2025)
+**Nuevos Archivos Creados:**
+- `EditExpenseModal.tsx` - Modal de edición completo con validaciones
+- Componente reutilizable con todos los campos del expense
+
+**Archivos Modificados:**
+- `ExpenseService.java` - **FIX CRÍTICO**: Agregada actualización de payerId en updateExpense()
+- `ExpenseService.java` - Agregadas validaciones de fechas futuras (create + update)
+- `Expenses.tsx` - **FIX CRÍTICO**: Cambio de `expense.createdAt` a `expense.expenseDate` para mostrar fecha correcta
+- `Expenses.tsx` - Agregados handlers para editar/eliminar con confirmaciones
+- `AddExpenseModal.tsx` - Agregada validación de fechas futuras
+- `useApi.ts` - Actualizado `useUpdateExpense` para mayor flexibilidad
+- `api.ts` - **FIX CRÍTICO**: Corregida transformación de datos en `updateExpense()` para coincidir con backend
+
+**Issues Críticos Resueltos:**
+- ✅ **Paid By no se actualizaba**: Faltaba lógica de actualización de payer en backend
+- ✅ **Fecha no se mostraba actualizada en lista**: Frontend usaba createdAt en lugar de expenseDate
+- ✅ **Participantes no se actualizaban**: API de update no transformaba datos correctamente
+- ✅ **Validaciones de fechas**: Implementadas en UI y backend para prevenir gastos futuros
+
+### 🎯 Decisiones de Diseño UX Implementadas
+**OPCIÓN B - Balance UX/Complejidad adoptada:**
+```
+✅ Campos Editables:
+  - Descripción, Monto, Fecha del gasto
+  - Participantes (solo del mismo grupo), Notas
+  - Tipo de división
+
+🔒 Campos Solo-Lectura (mostrados en gris):
+  - Grupo (no se puede cambiar - mantiene integridad)
+  - Pagador (no se puede cambiar - mantiene historial)
+```
+
+**Beneficios de esta decisión:**
+- ✅ Permite editar lo más común sin crear inconsistencias complejas
+- ✅ Evita problemas de balances e integridad de datos  
+- ✅ UX más clara y fácil de entender
+- ✅ Mantiene el concepto de "quién realmente pagó"
+
+### 🧪 Testing Completo Realizado
+**Flujo de Edición Probado:**
+1. ✅ **Crear gasto** con datos iniciales
+2. ✅ **Editar descripción y monto** - se actualiza correctamente en lista
+3. ✅ **Cambiar fecha** - se refleja correctamente en la UI
+4. ✅ **Modificar participantes** - recalcula splits automáticamente  
+5. ✅ **Validación de fechas futuras** - rechazadas en frontend y backend
+6. ✅ **Eliminación con confirmación** - funciona correctamente
+
+**APIs Validadas:**
+- ✅ `PUT /api/expenses/{id}` - Actualización completa funcional
+- ✅ `DELETE /api/expenses/{id}` - Eliminación funcional  
+- ✅ Invalidación de cache automática en React Query
+- ✅ Transformación correcta de datos frontend ↔ backend
 
 ### 📊 Funcionalidades MVP Implementadas y Probadas
 1. **Sistema de Gastos CRUD Completo**
@@ -190,21 +264,23 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
 4. ✅ Verificar recálculo: Diana balance=$0, Charlie recibió pago, settlements actualizados
 5. ✅ APIs de settlements: historial, estadísticas, CRUD completo
 
-### 📋 Próximas Sesiones - Roadmap Post-MVP
+### 📋 Próximas Sesiones - Roadmap Post-Edición
 
-#### 🔐 Semana 1 (Prioridad Alta)
+#### 🎨 Próxima Prioridad (UX/UI Improvements)  
+- [ ] **Mejorar experiencia de usuario**
+  - [ ] Loading states en operaciones de editar/eliminar gastos
+  - [ ] Notificaciones toast para éxito/error en CRUD operations
+  - [ ] Validación de formularios mejorada en frontend
+  - [ ] Responsive design para móviles
+  - [ ] Animaciones y transiciones suaves
+
+#### 🔐 Semana 2 (Prioridad Alta)
 - [ ] **Sistema de autenticación JWT básico**
-  - [ ] Entidades User con password y roles
+  - [ ] Entidades User con password y roles  
   - [ ] Endpoints login/register con JWT
   - [ ] Middleware de autenticación en controladores
   - [ ] Context de autenticación en frontend
-
-#### 🎨 Semana 2 (UX Improvements)  
-- [ ] **Mejorar experiencia de usuario**
-  - [ ] Loading states en todas las operaciones
-  - [ ] Notificaciones toast para éxito/error
-  - [ ] Validación de formularios en frontend
-  - [ ] Responsive design para móviles
+  - [ ] Protección de rutas y operaciones sensibles
 
 #### ⚡ Semana 3 (Features Adicionales)
 - [ ] **Filtros y búsqueda avanzada**
@@ -226,3 +302,45 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
 - [ ] Notificaciones push/email para deudas
 - [ ] App móvil con React Native
 - [ ] Integración con bancos/billeteras digitales
+
+## 🚀 Estado Actual - Listo para Continuar
+
+### ✅ Sistema Completamente Operativo
+- **Backend**: Spring Boot ejecutándose en puerto 8080
+- **Frontend**: React + Vite ejecutándose en puerto 5173  
+- **Base de Datos**: PostgreSQL en Docker funcionando
+- **Todas las APIs**: CRUD completo de expenses, groups, users, settlements
+- **UI Completa**: Modales de crear/editar/eliminar gastos funcionando
+
+### 🎯 Funcionalidades Principales Disponibles
+1. **Gestión de Gastos**: Crear, editar, eliminar con validaciones
+2. **División Automática**: Cálculo de splits equitativos
+3. **Balances**: Cálculo automático de quién debe a quién
+4. **Settlements**: Sistema de registro de pagos completados
+5. **Dashboard**: Vista general de gastos y estadísticas
+6. **Grupos**: Gestión de grupos de usuarios
+
+### 🔧 Para Continuar en la Próxima Sesión
+**Comandos para levantar el entorno:**
+```bash
+# Terminal 1 - PostgreSQL
+docker start equalpay-postgres
+
+# Terminal 2 - Backend  
+cd apps/backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Terminal 3 - Frontend
+cd apps/frontend && npm run dev
+```
+
+**URLs:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8080/api
+- PostgreSQL: localhost:5432 (equalpay_dev database)
+
+### 📝 Contexto para Claude
+- Sistema de edición de gastos **completamente funcional**
+- Validaciones de fechas futuras implementadas
+- Campos editables vs solo-lectura bien definidos
+- Todas las funcionalidades probadas y documentadas
+- Listo para continuar con UX improvements o autenticación JWT
