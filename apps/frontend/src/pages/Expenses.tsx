@@ -12,8 +12,9 @@ import {
   ArrowDownIcon,
   BanknotesIcon
 } from '@heroicons/react/24/outline'
-import { useExpenses, useGroups, useCurrentUser } from '../hooks/useApi'
+import { useExpenses, useGroups, useCurrentUser, useDeleteExpense } from '../hooks/useApi'
 import AddExpenseModal from '../components/AddExpenseModal'
+import EditExpenseModal from '../components/EditExpenseModal'
 
 export default function Expenses() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -21,14 +22,17 @@ export default function Expenses() {
   const [selectedGroup, setSelectedGroup] = useState('all')
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [showEditExpense, setShowEditExpense] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<any>(null)
 
   const { data: user } = useCurrentUser()
   const { data: expensesData, isLoading: expensesLoading } = useExpenses()
   const { data: groups } = useGroups()
+  const deleteExpenseMutation = useDeleteExpense()
 
   const processedExpenses = expensesData?.map(expense => {
     const userSplit = expense.splits.find(split => split.userId === user?.id)
-    const date = new Date(expense.createdAt)
+    const date = new Date(expense.expenseDate)
     
     return {
       id: expense.id,
@@ -85,6 +89,27 @@ export default function Expenses() {
 
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
   const yourTotal = filteredExpenses.reduce((sum, expense) => sum + expense.yourShare, 0)
+
+  const handleEditExpense = (expense: any) => {
+    // Find the original expense data from the backend response
+    const originalExpense = expensesData?.find(e => e.id === expense.id)
+    if (originalExpense) {
+      setEditingExpense(originalExpense)
+      setShowEditExpense(true)
+    }
+  }
+
+  const handleDeleteExpense = async (expenseId: number) => {
+    if (confirm('Are you sure you want to delete this expense?')) {
+      try {
+        await deleteExpenseMutation.mutateAsync(expenseId)
+        // Success message or toast could be added here
+      } catch (error) {
+        console.error('Error deleting expense:', error)
+        alert('Error deleting expense. Please try again.')
+      }
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -401,10 +426,19 @@ export default function Expenses() {
                 </div>
 
                 <div className="flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all">
-                  <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-gray-400 hover:text-white transition-all">
+                  <button 
+                    onClick={() => handleEditExpense(expense)}
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-gray-400 hover:text-white transition-all"
+                    title="Edit expense"
+                  >
                     <PencilIcon className="h-4 w-4" />
                   </button>
-                  <button className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 hover:text-red-300 transition-all">
+                  <button 
+                    onClick={() => handleDeleteExpense(expense.id)}
+                    className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 hover:text-red-300 transition-all"
+                    title="Delete expense"
+                    disabled={deleteExpenseMutation.isPending}
+                  >
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
@@ -434,6 +468,21 @@ export default function Expenses() {
         onClose={() => setShowAddExpense(false)}
         onSuccess={() => {
           setShowAddExpense(false)
+          // Could add a toast notification here
+        }}
+      />
+
+      {/* Edit Expense Modal */}
+      <EditExpenseModal
+        isOpen={showEditExpense}
+        onClose={() => {
+          setShowEditExpense(false)
+          setEditingExpense(null)
+        }}
+        expense={editingExpense}
+        onSuccess={() => {
+          setShowEditExpense(false)
+          setEditingExpense(null)
           // Could add a toast notification here
         }}
       />

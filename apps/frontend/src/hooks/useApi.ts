@@ -214,13 +214,14 @@ export function useCreateExpense() {
   })
 }
 
-export function useUpdateExpense(id: number) {
+export function useUpdateExpense() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: (expense: Partial<CreateExpenseRequest>) => apiClient.updateExpense(id, expense),
+    mutationFn: ({ id, updateData }: { id: number; updateData: Partial<CreateExpenseRequest> }) => 
+      apiClient.updateExpense(id, updateData),
     onSuccess: (updatedExpense) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.expense(id) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.expense(updatedExpense.id) })
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(updatedExpense.groupId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.balances() })
@@ -277,28 +278,30 @@ export function useUserDebts(userId: number) {
   })
 }
 
-export function useSettleBalance() {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: ({ 
-      fromUserId, 
-      toUserId, 
-      amount, 
-      groupId 
-    }: { 
-      fromUserId: number
-      toUserId: number
-      amount: number
-      groupId?: number 
-    }) => apiClient.settleBalance(fromUserId, toUserId, amount, groupId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.balances() })
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })
-      queryClient.invalidateQueries({ queryKey: queryKeys.recentActivity })
-    },
-  })
-}
+// Settlement functionality is handled by the backend settlement system
+// This hook is deprecated - use settlement APIs instead
+// export function useSettleBalance() {
+//   const queryClient = useQueryClient()
+//   
+//   return useMutation({
+//     mutationFn: ({ 
+//       fromUserId, 
+//       toUserId, 
+//       amount, 
+//       groupId 
+//     }: { 
+//       fromUserId: number
+//       toUserId: number
+//       amount: number
+//       groupId?: number 
+//     }) => apiClient.settleBalance(fromUserId, toUserId, amount, groupId),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: queryKeys.balances() })
+//       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })
+//       queryClient.invalidateQueries({ queryKey: queryKeys.recentActivity })
+//     },
+//   })
+// }
 
 // Dashboard Hooks
 export function useDashboardStats(userId?: number) {

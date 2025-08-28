@@ -134,41 +134,213 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
   -d '{"name": "Viaje Bariloche", "description": "Gastos compartidos"}'
 ```
 
-## Estado de la Conversación
-- Usuario familiarizado con setup completo
-- Docker instalado y funcionando
-- Backend corriendo correctamente
-- ✅ Entidades Expense y ExpenseSplit implementadas
-- ✅ Sistema de balances funcional
-- ✅ APIs probadas manualmente por el usuario
+## Estado del Proyecto - Sesión 28/08/2025 COMPLETADA
 
-### 🐛 Issues Identificados en Testing Manual
-**Problemas en ExpenseDTO (POST /api/expenses response):**
-1. `splitType` funciona correctamente (EQUAL/PERCENTAGE/EXACT_AMOUNT)
-2. Campos `group` aparecen como null (deberían tener info del grupo)
-3. Campo `expenseSplits` está vacío (deberían cargar las divisiones automáticas)
+### 🎉 FUNCIONALIDAD DE EDICIÓN Y UX MEJORADAS
+- ✅ **Sistema de edición/eliminación de gastos completamente operativo**
+- ✅ **Validaciones de fechas futuras implementadas** (backend + frontend)
+- ✅ **Campos editables vs solo-lectura definidos** con UX optimizada
+- ✅ Backend + Frontend + PostgreSQL funcionando perfectamente
+- ✅ Todas las funcionalidades de la sesión probadas y funcionando
 
-**Problemas en diseño de DTOs (GET /api/expenses):**
-1. `participantIds` vacío pero `participants` lleno (redundancia)
-2. Datos del usuario duplicados en `expenseSplits` y `participants`
-3. Propuesta: Separar claramente participants vs splits para mayor claridad
+### 📊 Funcionalidades Implementadas en Esta Sesión
+1. **Sistema de Edición de Gastos Completo**
+   - ✅ **Modal EditExpenseModal.tsx** completamente funcional
+   - ✅ **Botones de editar/eliminar** con hover effects en lista de gastos
+   - ✅ **Campos editables definidos**: Descripción, Monto, Fecha, Participantes, Notas
+   - ✅ **Campos solo-lectura**: Grupo, Pagador (mostrados con indicación visual)
+   - ✅ **Integración completa con APIs** de actualización y eliminación
 
-### ✅ Fixes Completados
-- [x] Arreglar carga lazy de `group` en ExpenseDTO (fetch joins implementados)
-- [x] Arreglar carga lazy de `expenseSplits` en ExpenseDTO (fetch joins implementados)
-- [x] Mejorar diseño de DTOs para eliminar redundancia
-- [x] Separar `participants` vs `splits` en responses (nuevo SplitDTO creado)
+2. **Sistema de Eliminación de Gastos**
+   - ✅ **Confirmación antes de eliminar** para prevenir borrados accidentales
+   - ✅ **Invalidación automática de cache** para updates en tiempo real
+   - ✅ **API DELETE /api/expenses/{id}** funcionando correctamente
 
-### 📋 TODOs Pendientes para Próxima Sesión
-- [ ] Probar todas las APIs con los nuevos fixes implementados
-- [ ] Verificar que group y splits cargan correctamente en responses
-- [ ] Probar creación de gastos con nuevo formato de DTOs
-- [ ] Probar cálculos de balances completos
-- [ ] Hacer commit final con todos los fixes
+3. **Validaciones de Fechas Futuras**
+   - ✅ **Frontend**: `max` attribute en campos date + mensaje explicativo
+   - ✅ **Backend**: Validación en `ExpenseService.java` rechaza fechas futuras
+   - ✅ **Doble validación** UI + API para máxima consistencia
+   - ✅ **Lógica de negocio**: "Un gasto debe reflejar cuando realmente se pagó"
 
-### 🔧 Cambios Técnicos Realizados
-- Agregado fetch joins en ExpenseRepository para evitar lazy loading
-- Creado SplitDTO simplificado (userId, userName, amountOwed)
-- Eliminado participantIds redundante del ExpenseDTO
-- Simplificado DataLoader para evitar problemas de cascading
-- Actualizado ExpenseService para usar nuevos métodos con fetch joins
+### 🔧 Cambios Técnicos Completados (Sesión 28/08/2025)
+**Nuevos Archivos Creados:**
+- `EditExpenseModal.tsx` - Modal de edición completo con validaciones
+- Componente reutilizable con todos los campos del expense
+
+**Archivos Modificados:**
+- `ExpenseService.java` - **FIX CRÍTICO**: Agregada actualización de payerId en updateExpense()
+- `ExpenseService.java` - Agregadas validaciones de fechas futuras (create + update)
+- `Expenses.tsx` - **FIX CRÍTICO**: Cambio de `expense.createdAt` a `expense.expenseDate` para mostrar fecha correcta
+- `Expenses.tsx` - Agregados handlers para editar/eliminar con confirmaciones
+- `AddExpenseModal.tsx` - Agregada validación de fechas futuras
+- `useApi.ts` - Actualizado `useUpdateExpense` para mayor flexibilidad
+- `api.ts` - **FIX CRÍTICO**: Corregida transformación de datos en `updateExpense()` para coincidir con backend
+
+**Issues Críticos Resueltos:**
+- ✅ **Paid By no se actualizaba**: Faltaba lógica de actualización de payer en backend
+- ✅ **Fecha no se mostraba actualizada en lista**: Frontend usaba createdAt en lugar de expenseDate
+- ✅ **Participantes no se actualizaban**: API de update no transformaba datos correctamente
+- ✅ **Validaciones de fechas**: Implementadas en UI y backend para prevenir gastos futuros
+
+### 🎯 Decisiones de Diseño UX Implementadas
+**OPCIÓN B - Balance UX/Complejidad adoptada:**
+```
+✅ Campos Editables:
+  - Descripción, Monto, Fecha del gasto
+  - Participantes (solo del mismo grupo), Notas
+  - Tipo de división
+
+🔒 Campos Solo-Lectura (mostrados en gris):
+  - Grupo (no se puede cambiar - mantiene integridad)
+  - Pagador (no se puede cambiar - mantiene historial)
+```
+
+**Beneficios de esta decisión:**
+- ✅ Permite editar lo más común sin crear inconsistencias complejas
+- ✅ Evita problemas de balances e integridad de datos  
+- ✅ UX más clara y fácil de entender
+- ✅ Mantiene el concepto de "quién realmente pagó"
+
+### 🧪 Testing Completo Realizado
+**Flujo de Edición Probado:**
+1. ✅ **Crear gasto** con datos iniciales
+2. ✅ **Editar descripción y monto** - se actualiza correctamente en lista
+3. ✅ **Cambiar fecha** - se refleja correctamente en la UI
+4. ✅ **Modificar participantes** - recalcula splits automáticamente  
+5. ✅ **Validación de fechas futuras** - rechazadas en frontend y backend
+6. ✅ **Eliminación con confirmación** - funciona correctamente
+
+**APIs Validadas:**
+- ✅ `PUT /api/expenses/{id}` - Actualización completa funcional
+- ✅ `DELETE /api/expenses/{id}` - Eliminación funcional  
+- ✅ Invalidación de cache automática en React Query
+- ✅ Transformación correcta de datos frontend ↔ backend
+
+### 📊 Funcionalidades MVP Implementadas y Probadas
+1. **Sistema de Gastos CRUD Completo**
+   - ✅ Crear gastos con división automática (`POST /api/expenses`)
+   - ✅ Editar gastos existentes (`PUT /api/expenses/{id}`)
+   - ✅ Eliminar gastos (`DELETE /api/expenses/{id}`)
+   - ✅ Listar gastos con fetch joins completos (`GET /api/expenses`)
+   - ✅ Filtros por grupo, pagador, participante (`GET /api/expenses/*`)
+
+2. **Sistema de Balances Inteligente**
+   - ✅ Cálculo automático de balances netos por usuario
+   - ✅ Algoritmo de liquidación óptima (minimal settlements)
+   - ✅ Integración con settlements para recálculo tras pagos
+   - ✅ API completa de balances (`GET /api/balances/group/{id}`)
+
+3. **Sistema de Settlements/Pagos**
+   - ✅ Entidad Settlement con JPA completo
+   - ✅ Registro de pagos completados (`POST /api/settlements`)
+   - ✅ Historial de pagos por grupo/usuario (`GET /api/settlements/*`)
+   - ✅ Actualización automática de balances tras settlements
+   - ✅ Estadísticas de pagos (`GET /api/settlements/stats/*`)
+
+### 🔧 Cambios Técnicos Completados (523+ líneas código)
+**Nuevos Archivos Creados:**
+- `Settlement.java` - Entidad JPA para pagos completados
+- `SettlementDTO.java` - DTO con validaciones Bean Validation
+- `SettlementRepository.java` - Queries customizadas con @Query
+- `SettlementService.java` - Lógica de negocio completa (144 líneas)
+- `SettlementController.java` - REST endpoints completos (80 líneas)
+
+**Archivos Modificados:**
+- `BalanceService.java` - Integración con settlements para recálculo
+- `ExpenseService.java` - Fix de shared collection references
+
+**Issues Técnicos Resueltos:**
+- ✅ Lazy loading con fetch joins en todos los DTOs
+- ✅ Shared collection references en Hibernate
+- ✅ DTO design limpio (participants vs splits separados)
+- ✅ Validaciones completas en todos los endpoints
+- ✅ Manejo de transacciones JPA optimizado
+
+### 🧪 Testing Manual Completado
+**Flujo Completo Probado:**
+1. ✅ Crear gastos: Combustible $200 (Bob), Hotel $800 (Charlie)
+2. ✅ Verificar balances: Alice -$250, Bob -$50, Charlie +$550, Diana -$250
+3. ✅ Registrar settlement: Diana paga $250 a Charlie
+4. ✅ Verificar recálculo: Diana balance=$0, Charlie recibió pago, settlements actualizados
+5. ✅ APIs de settlements: historial, estadísticas, CRUD completo
+
+### 📋 Próximas Sesiones - Roadmap Post-Edición
+
+#### 🎨 Próxima Prioridad (UX/UI Improvements)  
+- [ ] **Mejorar experiencia de usuario**
+  - [ ] Loading states en operaciones de editar/eliminar gastos
+  - [ ] Notificaciones toast para éxito/error en CRUD operations
+  - [ ] Validación de formularios mejorada en frontend
+  - [ ] Responsive design para móviles
+  - [ ] Animaciones y transiciones suaves
+
+#### 🔐 Semana 2 (Prioridad Alta)
+- [ ] **Sistema de autenticación JWT básico**
+  - [ ] Entidades User con password y roles  
+  - [ ] Endpoints login/register con JWT
+  - [ ] Middleware de autenticación en controladores
+  - [ ] Context de autenticación en frontend
+  - [ ] Protección de rutas y operaciones sensibles
+
+#### ⚡ Semana 3 (Features Adicionales)
+- [ ] **Filtros y búsqueda avanzada**
+  - [ ] Filtros por fecha en gastos
+  - [ ] Búsqueda por descripción/monto
+  - [ ] Paginación en listas largas
+  - [ ] Export de datos (PDF/Excel)
+
+#### 🧪 Semana 4 (Calidad y Deploy)
+- [ ] **Testing y deployment**
+  - [ ] Tests unitarios para servicios críticos
+  - [ ] Tests de integración para APIs
+  - [ ] CI/CD pipeline básico
+  - [ ] Deploy a producción (Railway/Heroku)
+
+### 💡 Ideas Futuras (Backlog)
+- [ ] Categorización de gastos con tags
+- [ ] Dashboard con gráficos y estadísticas
+- [ ] Notificaciones push/email para deudas
+- [ ] App móvil con React Native
+- [ ] Integración con bancos/billeteras digitales
+
+## 🚀 Estado Actual - Listo para Continuar
+
+### ✅ Sistema Completamente Operativo
+- **Backend**: Spring Boot ejecutándose en puerto 8080
+- **Frontend**: React + Vite ejecutándose en puerto 5173  
+- **Base de Datos**: PostgreSQL en Docker funcionando
+- **Todas las APIs**: CRUD completo de expenses, groups, users, settlements
+- **UI Completa**: Modales de crear/editar/eliminar gastos funcionando
+
+### 🎯 Funcionalidades Principales Disponibles
+1. **Gestión de Gastos**: Crear, editar, eliminar con validaciones
+2. **División Automática**: Cálculo de splits equitativos
+3. **Balances**: Cálculo automático de quién debe a quién
+4. **Settlements**: Sistema de registro de pagos completados
+5. **Dashboard**: Vista general de gastos y estadísticas
+6. **Grupos**: Gestión de grupos de usuarios
+
+### 🔧 Para Continuar en la Próxima Sesión
+**Comandos para levantar el entorno:**
+```bash
+# Terminal 1 - PostgreSQL
+docker start equalpay-postgres
+
+# Terminal 2 - Backend  
+cd apps/backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Terminal 3 - Frontend
+cd apps/frontend && npm run dev
+```
+
+**URLs:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8080/api
+- PostgreSQL: localhost:5432 (equalpay_dev database)
+
+### 📝 Contexto para Claude
+- Sistema de edición de gastos **completamente funcional**
+- Validaciones de fechas futuras implementadas
+- Campos editables vs solo-lectura bien definidos
+- Todas las funcionalidades probadas y documentadas
+- Listo para continuar con UX improvements o autenticación JWT
