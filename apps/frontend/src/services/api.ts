@@ -258,9 +258,21 @@ class ApiClient {
   }
 
   async updateExpense(id: number, expense: Partial<CreateExpenseRequest>): Promise<Expense> {
+    // Transform frontend format to backend ExpenseDTO format (same as createExpense)
+    const expenseDTO = {
+      description: expense.description,
+      amount: expense.amount,
+      expenseDate: expense.expenseDate,
+      splitType: expense.splitType,
+      notes: expense.notes,
+      payerId: expense.paidById,
+      groupId: expense.groupId,
+      participants: expense.participantIds ? expense.participantIds.map(id => ({ id })) : undefined
+    }
+    
     return this.request<Expense>(`/expenses/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(expense),
+      body: JSON.stringify(expenseDTO),
     })
   }
 

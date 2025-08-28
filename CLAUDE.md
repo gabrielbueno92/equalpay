@@ -134,21 +134,25 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
   -d '{"name": "Viaje Bariloche", "description": "Gastos compartidos"}'
 ```
 
-## Estado del Proyecto - Sesión 27/12/2024 COMPLETADA
+## Estado del Proyecto - Sesiones COMPLETADAS
 
 ### 🎉 MVP FUNCIONAL COMPLETO - MERGEADO A MAIN
-- ✅ **PR #3 `feature/settlement-system` MERGEADO** exitosamente
-- ✅ Todas las funcionalidades core implementadas y probadas
+- ✅ **PR #3 `feature/settlement-system` MERGEADO** exitosamente (Sesión 27/12/2024)
+- ✅ **PR #4 `feature/expense-edit-delete` MERGEADO** exitosamente (Sesión 28/08/2025)
 - ✅ Backend + Frontend + PostgreSQL funcionando perfectamente
 - ✅ Sistema completo de gastos, balances y liquidaciones operativo
+- ✅ **Sistema de edición/eliminación de gastos completamente operativo**
+- ✅ **Validaciones de fechas futuras implementadas** (backend + frontend)
 
 ### 📊 Funcionalidades MVP Implementadas y Probadas
 1. **Sistema de Gastos CRUD Completo**
    - ✅ Crear gastos con división automática (`POST /api/expenses`)
-   - ✅ Editar gastos existentes (`PUT /api/expenses/{id}`)
-   - ✅ Eliminar gastos (`DELETE /api/expenses/{id}`)
+   - ✅ **Editar gastos existentes** (`PUT /api/expenses/{id}`) - **NUEVO EN SESIÓN 28/08**
+   - ✅ **Eliminar gastos** (`DELETE /api/expenses/{id}`) - **NUEVO EN SESIÓN 28/08**
    - ✅ Listar gastos con fetch joins completos (`GET /api/expenses`)
    - ✅ Filtros por grupo, pagador, participante (`GET /api/expenses/*`)
+   - ✅ **Modal EditExpenseModal.tsx completamente funcional** - **NUEVO EN SESIÓN 28/08**
+   - ✅ **Validaciones de fechas futuras** (UI + backend) - **NUEVO EN SESIÓN 28/08**
 
 2. **Sistema de Balances Inteligente**
    - ✅ Cálculo automático de balances netos por usuario
@@ -163,6 +167,12 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
    - ✅ Actualización automática de balances tras settlements
    - ✅ Estadísticas de pagos (`GET /api/settlements/stats/*`)
 
+4. **Sistema de Edición UX Optimizada** - **NUEVO EN SESIÓN 28/08**
+   - ✅ **Campos editables**: Descripción, Monto, Fecha, Participantes, Notas
+   - ✅ **Campos solo-lectura**: Grupo, Pagador (mantiene integridad de datos)
+   - ✅ **Botones de editar/eliminar** con hover effects
+   - ✅ **Confirmación antes de eliminar** para prevenir borrados accidentales
+   - ✅ **Issues críticos resueltos**: Paid By, fecha display, participantes update
 ### 🔧 Cambios Técnicos Completados (523+ líneas código)
 **Nuevos Archivos Creados:**
 - `Settlement.java` - Entidad JPA para pagos completados
@@ -190,21 +200,23 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
 4. ✅ Verificar recálculo: Diana balance=$0, Charlie recibió pago, settlements actualizados
 5. ✅ APIs de settlements: historial, estadísticas, CRUD completo
 
-### 📋 Próximas Sesiones - Roadmap Post-MVP
+### 📋 Próximas Sesiones - Roadmap Post-MVP y Edición
 
-#### 🔐 Semana 1 (Prioridad Alta)
+#### 🎨 Próxima Prioridad (UX/UI Improvements)  
+- [ ] **Mejorar experiencia de usuario**
+  - [ ] Loading states en operaciones de editar/eliminar gastos
+  - [ ] Notificaciones toast para éxito/error en CRUD operations
+  - [ ] Validación de formularios mejorada en frontend
+  - [ ] Responsive design para móviles
+  - [ ] Animaciones y transiciones suaves
+
+#### 🔐 Semana 2 (Prioridad Alta)
 - [ ] **Sistema de autenticación JWT básico**
-  - [ ] Entidades User con password y roles
+  - [ ] Entidades User con password y roles  
   - [ ] Endpoints login/register con JWT
   - [ ] Middleware de autenticación en controladores
   - [ ] Context de autenticación en frontend
-
-#### 🎨 Semana 2 (UX Improvements)  
-- [ ] **Mejorar experiencia de usuario**
-  - [ ] Loading states en todas las operaciones
-  - [ ] Notificaciones toast para éxito/error
-  - [ ] Validación de formularios en frontend
-  - [ ] Responsive design para móviles
+  - [ ] Protección de rutas y operaciones sensibles
 
 #### ⚡ Semana 3 (Features Adicionales)
 - [ ] **Filtros y búsqueda avanzada**
@@ -226,3 +238,46 @@ curl -X POST "http://localhost:8080/api/groups?creatorId=1" \
 - [ ] Notificaciones push/email para deudas
 - [ ] App móvil con React Native
 - [ ] Integración con bancos/billeteras digitales
+
+## 🚀 Estado Actual - Listo para Continuar
+
+### ✅ Sistema Completamente Operativo
+- **Backend**: Spring Boot ejecutándose en puerto 8080
+- **Frontend**: React + Vite ejecutándose en puerto 5173  
+- **Base de Datos**: PostgreSQL en Docker funcionando
+- **Todas las APIs**: CRUD completo de expenses, groups, users, settlements
+- **UI Completa**: Modales de crear/editar/eliminar gastos funcionando
+
+### 🎯 Funcionalidades Principales Disponibles
+1. **Gestión de Gastos**: Crear, editar, eliminar con validaciones
+2. **División Automática**: Cálculo de splits equitativos
+3. **Balances**: Cálculo automático de quién debe a quién
+4. **Settlements**: Sistema de registro de pagos completados
+5. **Dashboard**: Vista general de gastos y estadísticas
+6. **Grupos**: Gestión de grupos de usuarios
+
+### 🔧 Para Continuar en la Próxima Sesión
+**Comandos para levantar el entorno:**
+```bash
+# Terminal 1 - PostgreSQL
+docker start equalpay-postgres
+
+# Terminal 2 - Backend  
+cd apps/backend && mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Terminal 3 - Frontend
+cd apps/frontend && npm run dev
+```
+
+**URLs:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8080/api
+- PostgreSQL: localhost:5432 (equalpay_dev database)
+
+### 📝 Contexto para Claude
+- **Sistema de edición de gastos completamente funcional** (PR #4 mergeado)
+- Validaciones de fechas futuras implementadas (backend + frontend)
+- Campos editables vs solo-lectura bien definidos con UX optimizada
+- Issues críticos resueltos (Paid By, fecha display, participantes update)
+- Todas las funcionalidades probadas y documentadas
+- Listo para continuar con UX improvements o autenticación JWT
