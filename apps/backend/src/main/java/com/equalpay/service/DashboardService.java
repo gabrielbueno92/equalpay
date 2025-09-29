@@ -52,7 +52,7 @@ public class DashboardService {
                 expense.getId(),
                 expense.getDescription(),
                 expense.getAmount().doubleValue(),
-                expense.getNotes() != null ? expense.getNotes() : "General", // Using notes as category for now
+                getSplitTypeDisplayName(expense.getSplitType()), // Use split type instead of "General"
                 expense.getGroup().getName(),
                 expense.getPayer().getName(),
                 expense.getCreatedAt()
@@ -125,5 +125,18 @@ public class DashboardService {
         return expenses.stream()
             .mapToDouble(expense -> expense.getAmount().divide(BigDecimal.valueOf(expense.getExpenseSplits().size())).doubleValue())
             .sum();
+    }
+    
+    private String getSplitTypeDisplayName(com.equalpay.entity.Expense.SplitType splitType) {
+        switch (splitType) {
+            case EQUAL:
+                return "Split Equal";
+            case PERCENTAGE:
+                return "Split %";
+            case EXACT_AMOUNT:
+                return "Split Custom";
+            default:
+                return "Split";
+        }
     }
 }

@@ -78,7 +78,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselecte
         groupId: formData.groupId,
         splitType: formData.splitType,
         paidById: formData.paidById,
-        expenseDate: formData.expenseDate,
+        expenseDate: new Date(formData.expenseDate).toISOString(),
         participantIds: formData.selectAllParticipants 
           ? selectedGroup?.members.map(m => m.id) || []
           : formData.participantIds

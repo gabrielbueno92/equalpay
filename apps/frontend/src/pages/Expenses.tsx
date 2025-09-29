@@ -38,7 +38,9 @@ export default function Expenses() {
       id: expense.id,
       description: expense.description,
       amount: expense.amount,
-      category: 'general', // Backend doesn't have category yet - use default
+      category: expense.splitType.toLowerCase() === 'equal' ? 'Split Equal' : 
+                expense.splitType.toLowerCase() === 'percentage' ? 'Split %' : 
+                expense.splitType.toLowerCase() === 'exact_amount' ? 'Split Custom' : 'Split',
       group: expense.group?.name || 'Unknown Group',
       paidBy: expense.payer?.name === user?.name ? 'You' : expense.payer?.name || 'Unknown',
       date: date.toISOString().split('T')[0],
