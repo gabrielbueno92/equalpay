@@ -6,6 +6,14 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+interface AuthContextType {
+  user: User | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  showAuthModal: boolean
+  setShowAuthModal: (show: boolean) => void
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [showAuthModal, setShowAuthModal] = useState(false)
   
@@ -29,6 +37,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     showAuthModal,
     setShowAuthModal,
   }
+
 
   return (
     <AuthContext.Provider value={value}>

@@ -12,7 +12,8 @@ import {
   ArrowDownIcon,
   BanknotesIcon
 } from '@heroicons/react/24/outline'
-import { useExpenses, useUserGroups, useCurrentUser, useDeleteExpense } from '../hooks/useApi'
+import { useExpenses, useUserGroups, useDeleteExpense } from '../hooks/useApi'
+import { useAuth } from '../hooks/useAuth'
 import AddExpenseModal from '../components/AddExpenseModal'
 import EditExpenseModal from '../components/EditExpenseModal'
 
@@ -25,18 +26,18 @@ export default function Expenses() {
   const [showEditExpense, setShowEditExpense] = useState(false)
   const [editingExpense, setEditingExpense] = useState<any>(null)
 
-  const { data: user } = useCurrentUser()
+  const { user } = useAuth()
   const { data: expensesData, isLoading: expensesLoading } = useExpenses()
   const { data: groups } = useUserGroups(user?.id || 0)
   const deleteExpenseMutation = useDeleteExpense()
-
+  
   const processedExpenses = expensesData?.map(expense => {
     const userSplit = expense.splits.find(split => split.userId === user?.id)
     const date = new Date(expense.expenseDate)
     const userPaidThisExpense = expense.payer?.id === user?.id
     const userShare = userSplit?.amountOwed || 0
     
-    // Calculate net balance for this expense
+    // Calculate net balance for this expense  
     // If user paid: amount paid - user's share = net contribution
     // If user didn't pay: just the amount they owe
     const yourNetBalance = userPaidThisExpense ? 
