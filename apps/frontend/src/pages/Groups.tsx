@@ -6,14 +6,16 @@ import {
   HomeIcon,
   MusicalNoteIcon
 } from '@heroicons/react/24/outline'
-import { useUserGroups, useCurrentUser, useExpenses } from '../hooks/useApi'
+import { useUserGroups, useExpenses } from '../hooks/useApi'
+import { useAuth } from '../hooks/useAuth'
 import CreateGroupModal from '../components/CreateGroupModal'
 import GroupDetailsModal from '../components/GroupDetailsModal'
 
 export default function Groups() {
-  const { data: user } = useCurrentUser()
+  const { user } = useAuth()
   const { data: groupsData, isLoading: groupsLoading } = useUserGroups(user?.id || 0)
   const { data: allExpenses, isLoading: expensesLoading } = useExpenses()
+  
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false)
   const [showGroupDetails, setShowGroupDetails] = useState(false)
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)

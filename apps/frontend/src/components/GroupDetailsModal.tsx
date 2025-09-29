@@ -9,9 +9,12 @@ import {
   UserPlusIcon,
   UserMinusIcon,
   CreditCardIcon,
-  BanknotesIcon
+  BanknotesIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  CheckCircleIcon
 } from '@heroicons/react/24/outline'
-import { useGroup, useAddMemberToGroup, useRemoveMemberFromGroup, useUsers, useGroupExpenses } from '../hooks/useApi'
+import { useGroup, useAddMemberToGroup, useRemoveMemberFromGroup, useUsers, useGroupExpenses, useGroupBalance } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 import AddExpenseModal from './AddExpenseModal'
 
@@ -26,6 +29,7 @@ export default function GroupDetailsModal({ isOpen, onClose, groupId }: GroupDet
   const { data: group, isLoading: groupLoading } = useGroup(groupId || 0)
   const { data: users } = useUsers()
   const { data: groupExpenses, isLoading: expensesLoading } = useGroupExpenses(groupId || 0)
+  const { data: groupBalance, isLoading: balanceLoading } = useGroupBalance(groupId || 0)
   const addMemberMutation = useAddMemberToGroup()
   const removeMemberMutation = useRemoveMemberFromGroup()
   
@@ -332,6 +336,164 @@ export default function GroupDetailsModal({ isOpen, onClose, groupId }: GroupDet
                           </div>
                         )}
                       </div>
+
+                      {/* Expenses Section */}
+                      {groupExpenses && groupExpenses.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-white">Expenses ({groupExpenses.length})</h3>
+                          </div>
+                          
+                          <div className="space-y-3 max-h-80 overflow-y-auto">
+                            {groupExpenses.slice(0, 10).map(expense => {
+                              const userPaidThis = expense.payer?.id === user?.id
+                              const userSplit = expense.splits?.find(split => split.userId === user?.id)
+                              const userShare = userSplit?.amountOwed || 0
+                              
+                              return (
+                                <div key={expense.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
+                                  <div className="flex items-center space-x-3 flex-1">
+                                    <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white">
+                                      <BanknotesIcon className="h-5 w-5" />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-white font-medium">{expense.description}</p>
+                                      <p className="text-gray-400 text-sm">
+                                        Paid by {userPaidThis ? 'You' : expense.payer?.name || 'Unknown'}
+                                        {' • '}
+                                        {new Date(expense.expenseDate).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="text-right">
+                                    <div className="text-lg font-bold text-white">${expense.amount.toFixed(2)}</div>
+                                    {userPaidThis ? (
+                                      <div className="text-sm">
+                                        <div className="text-gray-400">Your share: ${userShare.toFixed(2)}</div>
+                                        <div className="text-emerald-400 font-medium">Net +${(expense.amount - userShare).toFixed(2)}</div>
+                                      </div>
+                                    ) : (
+                                      <div className="text-sm text-orange-400">You owe: ${userShare.toFixed(2)}</div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                          
+                          {groupExpenses.length > 10 && (
+                            <div className="mt-3 text-center">
+                              <p className="text-gray-400 text-sm">Showing 10 of {groupExpenses.length} expenses</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Balances Section */}
+                      {groupBalance && groupBalance.userBalances && groupBalance.userBalances.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-white">Balances</h3>
+                          </div>
+                          
+                          {/* Check if everyone is settled up */}
+                          {groupBalance.userBalances.every(ub => Math.abs(ub.netBalance) < 0.01) ? (
+                            <div className="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-center">
+                              <CheckCircleIcon className="h-12 w-12 text-emerald-400 mx-auto mb-3" />
+                              <p className="text-emerald-400 font-medium">All settled up! 🎉</p>
+                              <p className="text-gray-400 text-sm">Everyone is squared away in this group</p>
+                            </div>
+                          ) : (
+                            <>
+                              {/* User Balances */}
+                              <div className="space-y-3 mb-6">
+                                {groupBalance.userBalances.map(userBalance => (
+                                  <div key={userBalance.userId} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center text-white font-medium">
+                                        {userBalance.userName.charAt(0)}
+                                      </div>
+                                      <div>
+                                        <p className="text-white font-medium">
+                                          {userBalance.userName}
+                                          {userBalance.userId === user?.id && (
+                                            <span className="ml-2 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded-full">You</span>
+                                          )}
+                                        </p>
+                                        <p className="text-gray-400 text-sm">
+                                          Paid: ${userBalance.totalPaid.toFixed(2)} • Owes: ${userBalance.totalOwed.toFixed(2)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="text-right">
+                                      <div className={`text-xl font-bold ${
+                                        userBalance.netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'
+                                      }`}>
+                                        {userBalance.netBalance >= 0 ? '+' : ''}${userBalance.netBalance.toFixed(2)}
+                                      </div>
+                                      <div className={`text-xs font-medium flex items-center justify-end space-x-1 ${
+                                        userBalance.netBalance >= 0 ? 'text-emerald-400' : 'text-red-400'
+                                      }`}>
+                                        {userBalance.netBalance >= 0 ? (
+                                          <>
+                                            <ArrowUpIcon className="h-3 w-3" />
+                                            <span>Gets back</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <ArrowDownIcon className="h-3 w-3" />
+                                            <span>Owes</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Settlements - Who owes who */}
+                              {groupBalance.settlements && groupBalance.settlements.length > 0 && (
+                                <div>
+                                  <h4 className="text-md font-bold text-white mb-3">Who owes who</h4>
+                                  <div className="space-y-2">
+                                    {groupBalance.settlements.map((settlement, index) => (
+                                      <div key={index} className="flex items-center justify-between p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                                        <div className="flex items-center space-x-3">
+                                          <div className="text-white">
+                                            <span className="font-medium">
+                                              {settlement.debtorId === user?.id ? 'You' : settlement.debtorName}
+                                            </span>
+                                            <span className="text-gray-400 mx-2">owes</span>
+                                            <span className="font-medium">
+                                              {settlement.creditorId === user?.id ? 'you' : settlement.creditorName}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="text-orange-400 font-bold">
+                                          ${settlement.amount.toFixed(2)}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {groupExpenses && groupExpenses.length === 0 && (
+                        <div>
+                          <h3 className="text-lg font-bold text-white mb-4">Expenses</h3>
+                          <div className="p-6 bg-white/5 rounded-lg text-center">
+                            <BanknotesIcon className="h-12 w-12 text-gray-500 mx-auto mb-3" />
+                            <p className="text-gray-400">No expenses yet</p>
+                            <p className="text-gray-500 text-sm">Add an expense to get started</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8">
