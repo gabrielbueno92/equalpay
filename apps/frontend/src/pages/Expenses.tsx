@@ -12,7 +12,7 @@ import {
   ArrowDownIcon,
   BanknotesIcon
 } from '@heroicons/react/24/outline'
-import { useExpenses, useGroups, useCurrentUser, useDeleteExpense } from '../hooks/useApi'
+import { useExpenses, useUserGroups, useCurrentUser, useDeleteExpense } from '../hooks/useApi'
 import AddExpenseModal from '../components/AddExpenseModal'
 import EditExpenseModal from '../components/EditExpenseModal'
 
@@ -27,7 +27,7 @@ export default function Expenses() {
 
   const { data: user } = useCurrentUser()
   const { data: expensesData, isLoading: expensesLoading } = useExpenses()
-  const { data: groups } = useGroups()
+  const { data: groups } = useUserGroups(user?.id || 0)
   const deleteExpenseMutation = useDeleteExpense()
 
   const processedExpenses = expensesData?.map(expense => {

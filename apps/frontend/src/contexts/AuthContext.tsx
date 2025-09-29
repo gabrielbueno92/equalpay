@@ -11,9 +11,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // Demo mode - use a fake user for now since backend auth is not implemented
   const demoUser: User = {
-    id: 1,
-    name: 'Alice Johnson',
-    email: 'alice@email.com',
+    id: 2,
+    name: 'Bob Smith',
+    email: 'bob@email.com',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

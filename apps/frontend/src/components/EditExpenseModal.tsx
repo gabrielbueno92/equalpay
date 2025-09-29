@@ -1,7 +1,7 @@
 import { useState, Fragment, useEffect } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import { useGroups, useUpdateExpense } from '../hooks/useApi'
+import { useUserGroups, useUpdateExpense } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 import type { Expense } from '../services/api'
 
@@ -25,7 +25,7 @@ interface ExpenseFormData {
 
 export default function EditExpenseModal({ isOpen, onClose, onSuccess, expense }: EditExpenseModalProps) {
   const { user } = useAuth()
-  const { data: groups, isLoading: groupsLoading } = useGroups()
+  const { data: groups, isLoading: groupsLoading } = useUserGroups(user?.id || 0)
   const updateExpenseMutation = useUpdateExpense()
   
   const [formData, setFormData] = useState<ExpenseFormData>({

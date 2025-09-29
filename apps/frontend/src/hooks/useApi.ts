@@ -109,6 +109,21 @@ export function useGroups() {
   })
 }
 
+// Get only groups where the current user is a member
+export function useUserGroups(userId: number) {
+  return useQuery({
+    queryKey: ['groups', 'user', userId],
+    queryFn: async () => {
+      const allGroups = await apiClient.getGroups()
+      return allGroups.filter(group => 
+        group.members.some(member => member.id === userId)
+      )
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!userId,
+  })
+}
+
 export function useGroup(id: number) {
   return useQuery({
     queryKey: queryKeys.group(id),

@@ -12,7 +12,7 @@ import {
   BanknotesIcon,
   ClockIcon
 } from '@heroicons/react/24/outline'
-import { useDashboardStats, useRecentActivity, useCurrentUser, useGroups } from '../hooks/useApi'
+import { useDashboardStats, useRecentActivity, useCurrentUser, useUserGroups } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 import AddExpenseModal from '../components/AddExpenseModal'
 import CreateGroupModal from '../components/CreateGroupModal'
@@ -25,7 +25,7 @@ export default function Dashboard() {
   
   const { data: statsData, isLoading: statsLoading } = useDashboardStats()
   const { data: activity, isLoading: activityLoading } = useRecentActivity(4)
-  const { data: groups, isLoading: groupsLoading } = useGroups()
+  const { data: groups, isLoading: groupsLoading } = useUserGroups(user?.id || 0)
 
   const statsCards = statsData ? [
     { 

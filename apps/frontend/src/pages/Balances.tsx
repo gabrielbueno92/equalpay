@@ -11,7 +11,7 @@ import {
   PaperAirplaneIcon,
   CreditCardIcon
 } from '@heroicons/react/24/outline'
-import { useGroupBalance, useUserDebts, useGroups } from '../hooks/useApi'
+import { useGroupBalance, useUserDebts, useUserGroups } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 
 export default function Balances() {
@@ -21,7 +21,7 @@ export default function Balances() {
   const [showSettleModal, setShowSettleModal] = useState(false)
 
   // Fetch data from API
-  const { data: groups, isLoading: groupsLoading } = useGroups()
+  const { data: groups, isLoading: groupsLoading } = useUserGroups(user?.id || 0)
   const { data: groupBalance, isLoading: balanceLoading } = useGroupBalance(selectedGroupId || (groups?.[0]?.id || 1))
   const { data: userDebts, isLoading: debtsLoading } = useUserDebts(user?.id || 0)
 

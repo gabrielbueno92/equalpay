@@ -2,7 +2,7 @@ import { useState, Fragment } from 'react'
 import * as React from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import { useGroups, useCreateExpense } from '../hooks/useApi'
+import { useUserGroups, useCreateExpense } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 
 interface AddExpenseModalProps {
@@ -25,7 +25,7 @@ interface ExpenseFormData {
 
 export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselectedGroupId }: AddExpenseModalProps) {
   const { user } = useAuth()
-  const { data: groups, isLoading: groupsLoading } = useGroups()
+  const { data: groups, isLoading: groupsLoading } = useUserGroups(user?.id || 0)
   const createExpenseMutation = useCreateExpense()
   
   // Ref for initial focus
