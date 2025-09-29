@@ -129,11 +129,28 @@ class ApiClient {
       const response = await fetch(url, config)
       
       if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`
+        
+        // Try to get error message from response body
+        try {
+          const errorText = await response.text()
+          if (errorText) {
+            errorMessage = errorText
+          }
+        } catch (e) {
+          // If we can't parse the error body, use the default message
+        }
+        
         if (response.status === 401) {
           this.clearAuthToken()
-          throw new Error('Authentication required')
+          const error = new Error('Authentication required')
+          ;(error as any).response = { status: response.status, message: errorMessage }
+          throw error
         }
-        throw new Error(`HTTP error! status: ${response.status}`)
+        
+        const error = new Error(errorMessage)
+        ;(error as any).response = { status: response.status, message: errorMessage }
+        throw error
       }
 
       const contentType = response.headers.get('content-type')
@@ -216,9 +233,8 @@ class ApiClient {
   }
 
   async addMemberToGroup(groupId: number, userId: number): Promise<Group> {
-    return this.request<Group>(`/groups/${groupId}/members`, {
+    return this.request<Group>(`/groups/${groupId}/members/${userId}`, {
       method: 'POST',
-      body: JSON.stringify({ userId }),
     })
   }
 
@@ -232,6 +248,10 @@ class ApiClient {
   async getExpenses(groupId?: number): Promise<Expense[]> {
     const endpoint = groupId ? `/expenses?groupId=${groupId}` : '/expenses'
     return this.request<Expense[]>(endpoint)
+  }
+
+  async getExpensesByGroup(groupId: number): Promise<Expense[]> {
+    return this.request<Expense[]>(`/expenses/group/${groupId}`)
   }
 
   async getExpenseById(id: number): Promise<Expense> {

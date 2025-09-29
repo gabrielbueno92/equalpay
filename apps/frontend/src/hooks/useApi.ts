@@ -177,6 +177,9 @@ export function useRemoveMemberFromGroup() {
     onSuccess: (_, { groupId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.group(groupId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
+      queryClient.invalidateQueries({ queryKey: ['expenses', 'group', groupId] })
+      queryClient.invalidateQueries({ queryKey: ['expenses'] })
+      queryClient.invalidateQueries({ queryKey: ['balances'] })
     },
   })
 }
@@ -186,6 +189,15 @@ export function useExpenses(groupId?: number) {
   return useQuery({
     queryKey: queryKeys.expenses(groupId),
     queryFn: () => apiClient.getExpenses(groupId),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  })
+}
+
+export function useGroupExpenses(groupId: number) {
+  return useQuery({
+    queryKey: ['expenses', 'group', groupId],
+    queryFn: () => apiClient.getExpensesByGroup(groupId),
+    enabled: !!groupId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   })
 }
@@ -206,6 +218,7 @@ export function useCreateExpense() {
     mutationFn: (expense: CreateExpenseRequest) => apiClient.createExpense(expense),
     onSuccess: (newExpense) => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
+      queryClient.invalidateQueries({ queryKey: ['expenses', 'group', newExpense.groupId] })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(newExpense.groupId) })
       queryClient.invalidateQueries({ queryKey: ['balances'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })

@@ -1,4 +1,5 @@
 import { useState, Fragment } from 'react'
+import * as React from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useGroups, useCreateExpense } from '../hooks/useApi'
@@ -8,6 +9,7 @@ interface AddExpenseModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
+  preselectedGroupId?: number
 }
 
 interface ExpenseFormData {
@@ -21,15 +23,18 @@ interface ExpenseFormData {
   selectAllParticipants: boolean
 }
 
-export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpenseModalProps) {
+export default function AddExpenseModal({ isOpen, onClose, onSuccess, preselectedGroupId }: AddExpenseModalProps) {
   const { user } = useAuth()
   const { data: groups, isLoading: groupsLoading } = useGroups()
   const createExpenseMutation = useCreateExpense()
   
+  // Ref for initial focus
+  const descriptionInputRef = React.useRef<HTMLInputElement>(null)
+  
   const [formData, setFormData] = useState<ExpenseFormData>({
     description: '',
     amount: '',
-    groupId: groups?.[0]?.id || 1,
+    groupId: preselectedGroupId || groups?.[0]?.id || 1,
     participantIds: [],
     splitType: 'EQUAL',
     paidById: user?.id || 1,
@@ -37,7 +42,25 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
     selectAllParticipants: true
   })
 
+  // Update groupId when preselectedGroupId changes or groups load
+  React.useEffect(() => {
+    if (preselectedGroupId) {
+      setFormData(prev => ({ ...prev, groupId: preselectedGroupId }))
+    } else if (groups?.[0]?.id && !preselectedGroupId) {
+      setFormData(prev => ({ ...prev, groupId: groups[0].id }))
+    }
+  }, [preselectedGroupId, groups])
+
   const selectedGroup = groups?.find(g => g.id === formData.groupId)
+
+  const handleClose = () => {
+    onClose()
+  }
+
+  // Don't render the modal if we don't have the necessary data
+  if (groupsLoading || !selectedGroup) {
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,13 +126,9 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
     }))
   }
 
-  if (groupsLoading) {
-    return null
-  }
-
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="fixed inset-0 z-[60]" onClose={handleClose} initialFocus={descriptionInputRef}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -133,13 +152,16 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel 
+                className="w-full max-w-md transform overflow-hidden rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 p-6 text-left align-middle shadow-xl transition-all"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="flex items-center justify-between mb-6">
                   <Dialog.Title className="text-xl font-bold text-white">
                     Add New Expense
                   </Dialog.Title>
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-all"
                   >
                     <XMarkIcon className="h-6 w-6" />
@@ -153,6 +175,7 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                       Description *
                     </label>
                     <input
+                      ref={descriptionInputRef}
                       type="text"
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
@@ -238,11 +261,17 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                       
                       {/* Select All Toggle */}
                       <div className="mb-3 p-3 bg-white/5 rounded-lg border border-white/10">
-                        <label className="flex items-center space-x-3 cursor-pointer">
+                        <label 
+                          className="flex items-center space-x-3 cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <input
                             type="checkbox"
                             checked={formData.selectAllParticipants}
-                            onChange={toggleSelectAll}
+                            onChange={(e) => {
+                              e.stopPropagation()
+                              toggleSelectAll()
+                            }}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
                           <span className="text-white font-medium">Split with all group members</span>
@@ -257,11 +286,18 @@ export default function AddExpenseModal({ isOpen, onClose, onSuccess }: AddExpen
                         <div className="space-y-2">
                           <p className="text-sm text-gray-400 mb-2">Or select specific people:</p>
                           {selectedGroup.members.map(member => (
-                            <label key={member.id} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/5">
+                            <label 
+                              key={member.id} 
+                              className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-white/5"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <input
                                 type="checkbox"
                                 checked={formData.participantIds.includes(member.id)}
-                                onChange={() => toggleParticipant(member.id)}
+                                onChange={(e) => {
+                                  e.stopPropagation()
+                                  toggleParticipant(member.id)
+                                }}
                                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                               />
                               <span className="text-white">{member.name}</span>
