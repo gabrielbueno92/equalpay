@@ -207,7 +207,7 @@ export function useCreateExpense() {
     onSuccess: (newExpense) => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(newExpense.groupId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.balances() })
+      queryClient.invalidateQueries({ queryKey: ['balances'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })
       queryClient.invalidateQueries({ queryKey: queryKeys.recentActivity })
     },
@@ -224,7 +224,7 @@ export function useUpdateExpense() {
       queryClient.invalidateQueries({ queryKey: queryKeys.expense(updatedExpense.id) })
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(updatedExpense.groupId) })
-      queryClient.invalidateQueries({ queryKey: queryKeys.balances() })
+      queryClient.invalidateQueries({ queryKey: ['balances'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })
     },
   })
@@ -237,7 +237,7 @@ export function useDeleteExpense() {
     mutationFn: (id: number) => apiClient.deleteExpense(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
-      queryClient.invalidateQueries({ queryKey: queryKeys.balances() })
+      queryClient.invalidateQueries({ queryKey: ['balances'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })
       queryClient.invalidateQueries({ queryKey: queryKeys.recentActivity })
     },
@@ -253,7 +253,7 @@ export function useMarkExpenseSplitAsPaid() {
     onSuccess: (updatedExpense) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.expense(updatedExpense.id) })
       queryClient.invalidateQueries({ queryKey: ['expenses'] })
-      queryClient.invalidateQueries({ queryKey: queryKeys.balances() })
+      queryClient.invalidateQueries({ queryKey: ['balances'] })
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats })
     },
   })

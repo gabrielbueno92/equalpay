@@ -114,29 +114,30 @@ export default function Expenses() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-4xl font-black text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-black text-white mb-2">
             Your Expenses 💳
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-base md:text-lg">
             Track and manage all your shared expenses
           </p>
         </div>
         <div className="flex space-x-3">
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`${showFilters ? 'bg-blue-600' : 'bg-white/10 hover:bg-white/20'} backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2`}
+            className={`${showFilters ? 'bg-blue-600' : 'bg-white/10 hover:bg-white/20'} backdrop-blur-md border border-white/20 text-white px-4 md:px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2`}
           >
             <FunnelIcon className="h-5 w-5" />
-            <span>Filters</span>
+            <span className="hidden sm:inline">Filters</span>
           </button>
           <button 
             onClick={() => setShowAddExpense(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 md:px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2"
           >
             <PlusIcon className="h-5 w-5" />
-            <span>Add Expense</span>
+            <span className="hidden sm:inline">Add Expense</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
       </div>

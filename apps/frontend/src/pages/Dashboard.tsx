@@ -34,8 +34,7 @@ export default function Dashboard() {
       change: `${statsData.monthlyChange.totalSpent >= 0 ? '+' : ''}${statsData.monthlyChange.totalSpent.toFixed(1)}% vs last month`,
       trend: statsData.monthlyChange.totalSpent >= 0 ? 'up' : 'down',
       color: 'from-blue-500 to-cyan-500',
-      icon: CreditCardIcon,
-      onClick: () => navigate('/expenses')
+      icon: CreditCardIcon
     },
     { 
       name: 'Active Groups', 
@@ -43,8 +42,7 @@ export default function Dashboard() {
       change: `${statsData.monthlyChange.activeGroups >= 0 ? '+' : ''}${statsData.monthlyChange.activeGroups} vs last month`,
       trend: statsData.monthlyChange.activeGroups >= 0 ? 'up' : 'down',
       color: 'from-purple-500 to-pink-500',
-      icon: UserGroupIcon,
-      onClick: () => navigate('/groups')
+      icon: UserGroupIcon
     },
     { 
       name: 'Net Balance', 
@@ -52,8 +50,7 @@ export default function Dashboard() {
       change: `${statsData.monthlyChange.netBalance >= 0 ? '+' : ''}$${Math.abs(statsData.monthlyChange.netBalance).toFixed(2)} vs last month`,
       trend: statsData.monthlyChange.netBalance >= 0 ? 'up' : 'down',
       color: 'from-emerald-500 to-teal-500',
-      icon: ScaleIcon,
-      onClick: () => navigate('/balances')
+      icon: ScaleIcon
     },
   ] : []
 
@@ -128,14 +125,6 @@ export default function Dashboard() {
     setShowCreateGroupModal(true)
   }
   
-  const handleSettleUp = () => {
-    navigate('/balances')
-  }
-  
-  const handleAnalytics = () => {
-    // For now, navigate to expenses page
-    navigate('/expenses')
-  }
 
   const handleExportData = () => {
     // Create CSV export functionality
@@ -163,33 +152,28 @@ export default function Dashboard() {
     window.URL.revokeObjectURL(url)
   }
   
-  const quickActions = [
-    { name: 'Add Expense', icon: PlusIcon, color: 'from-blue-500 to-purple-600', onClick: handleAddExpense },
-    { name: 'Create Group', icon: UserGroupIcon, color: 'from-purple-500 to-pink-500', onClick: handleCreateGroup },
-    { name: 'Settle Up', icon: BanknotesIcon, color: 'from-emerald-500 to-cyan-500', onClick: handleSettleUp },
-    { name: 'Analytics', icon: ChartBarIcon, color: 'from-orange-500 to-red-500', onClick: handleAnalytics },
-  ]
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-4xl font-black text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-black text-white mb-2">
             {`Hello, ${user?.name?.split(' ')[0] || 'User'}! 👋`}
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-base md:text-lg">
             Here's your financial overview for today
           </p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex justify-end">
           <button 
             onClick={handleExportData}
             disabled={!statsData}
-            className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-4 md:px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <DocumentArrowDownIcon className="h-5 w-5" />
-            <span>Export Data</span>
+            <span className="hidden sm:inline">Export Data</span>
+            <span className="sm:hidden">Export</span>
           </button>
         </div>
       </div>
@@ -215,11 +199,11 @@ export default function Dashboard() {
           ))
         ) : (
           statsCards.map((stat) => (
-            <div key={stat.name} className="relative group cursor-pointer" onClick={stat.onClick}>
+            <div key={stat.name} className="relative group">
               <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} opacity-75 rounded-2xl blur group-hover:blur-md transition-all`}></div>
-              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all group-hover:scale-[1.02] transform duration-200">
+              <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
                 <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                  <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
                     <stat.icon className="h-6 w-6 text-white" />
                   </div>
                   <div className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -232,10 +216,6 @@ export default function Dashboard() {
                   <p className="text-gray-400 text-sm font-medium mb-1">{stat.name}</p>
                   <p className="text-3xl font-black text-white">{stat.value}</p>
                 </div>
-                {/* Click indicator */}
-                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-2 h-2 bg-white/60 rounded-full"></div>
-                </div>
               </div>
             </div>
           ))
@@ -243,16 +223,21 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {quickActions.map((action) => (
-          <button key={action.name} onClick={action.onClick} className="group relative">
-            <div className={`absolute inset-0 bg-gradient-to-r ${action.color} opacity-75 rounded-xl blur-sm group-hover:blur-none transition-all`}></div>
-            <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all text-center">
-              <action.icon className="h-6 w-6 text-white mx-auto mb-2" />
-              <div className="text-white font-medium text-sm">{action.name}</div>
-            </div>
-          </button>
-        ))}
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={handleAddExpense} className="group relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-75 rounded-xl blur-sm group-hover:blur-none transition-all"></div>
+          <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all text-center">
+            <PlusIcon className="h-6 w-6 text-white mx-auto mb-2" />
+            <div className="text-white font-medium text-sm">Add Expense</div>
+          </div>
+        </button>
+        <button onClick={handleCreateGroup} className="group relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 opacity-75 rounded-xl blur-sm group-hover:blur-none transition-all"></div>
+          <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all text-center">
+            <UserGroupIcon className="h-6 w-6 text-white mx-auto mb-2" />
+            <div className="text-white font-medium text-sm">Create Group</div>
+          </div>
+        </button>
       </div>
 
       {/* Main Content Grid */}

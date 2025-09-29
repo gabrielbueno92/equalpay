@@ -49,29 +49,30 @@ export default function Balances() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-4xl font-black text-white mb-2">
+          <h1 className="text-3xl md:text-4xl font-black text-white mb-2">
             Balances ⚖️
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className="text-gray-400 text-base md:text-lg">
             Settle up and track who owes what
           </p>
         </div>
         <div className="flex space-x-3">
           <button 
             onClick={() => setShowHistory(!showHistory)}
-            className={`${showHistory ? 'bg-blue-600' : 'bg-white/10 hover:bg-white/20'} backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2`}
+            className={`${showHistory ? 'bg-blue-600' : 'bg-white/10 hover:bg-white/20'} backdrop-blur-md border border-white/20 text-white px-4 md:px-6 py-3 rounded-xl font-medium transition-all flex items-center space-x-2`}
           >
             <ClockIcon className="h-5 w-5" />
-            <span>History</span>
+            <span className="hidden sm:inline">History</span>
           </button>
           <button 
             onClick={() => setShowSettleModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 md:px-6 py-3 rounded-xl font-medium transition-all shadow-lg flex items-center space-x-2"
           >
             <BanknotesIcon className="h-5 w-5" />
-            <span>Settle All</span>
+            <span className="hidden sm:inline">Settle All</span>
+            <span className="sm:hidden">Settle</span>
           </button>
         </div>
       </div>
@@ -216,6 +217,13 @@ export default function Balances() {
                 <div className="h-4 bg-gray-600 rounded w-1/2"></div>
               </div>
             </div>
+          </div>
+        ) : groupBalance?.userBalances?.every(ub => ub.netBalance === 0) ? (
+          <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
+            <CheckCircleIcon className="h-16 w-16 text-emerald-400 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">All settled up! 🎉</h3>
+            <p className="text-gray-400 mb-2">Everyone in {groupBalance?.groupName} is squared away.</p>
+            <p className="text-gray-400">No outstanding balances to worry about!</p>
           </div>
         ) : groupBalance?.userBalances?.map((userBalance) => (
           <div key={userBalance.userId} className="group bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
