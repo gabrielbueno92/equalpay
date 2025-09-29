@@ -12,7 +12,7 @@ import {
   BanknotesIcon,
   ClockIcon
 } from '@heroicons/react/24/outline'
-import { useDashboardStats, useRecentActivity, useCurrentUser, useGroups } from '../hooks/useApi'
+import { useDashboardStats, useRecentActivity, useCurrentUser, useUserGroups } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
 import AddExpenseModal from '../components/AddExpenseModal'
 import CreateGroupModal from '../components/CreateGroupModal'
@@ -25,7 +25,7 @@ export default function Dashboard() {
   
   const { data: statsData, isLoading: statsLoading } = useDashboardStats()
   const { data: activity, isLoading: activityLoading } = useRecentActivity(4)
-  const { data: groups, isLoading: groupsLoading } = useGroups()
+  const { data: groups, isLoading: groupsLoading } = useUserGroups(user?.id || 0)
 
   const statsCards = statsData ? [
     { 
@@ -55,6 +55,7 @@ export default function Dashboard() {
   ] : []
 
   const getCategoryIcon = (category: string) => {
+    // Handle split types if they exist, otherwise use default
     switch (category.toLowerCase()) {
       case 'food': return '🍽️'
       case 'transport': return '🚗'
@@ -62,7 +63,8 @@ export default function Dashboard() {
       case 'entertainment': return '🎬'
       case 'utilities': return '⚡'
       case 'shopping': return '🛒'
-      default: return '💰'
+      case 'general': return '💳'  // Better icon for general expenses
+      default: return '💳'  // Better default icon
     }
   }
 
@@ -275,7 +277,7 @@ export default function Dashboard() {
                 ))
               ) : recentExpenses.length > 0 ? (
                 recentExpenses.map((expense, index) => (
-                  <div key={index} className="group flex items-center space-x-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer">
+                  <div key={index} className="flex items-center space-x-4 p-4 rounded-xl bg-white/5">
                     <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center text-xl">
                       {expense.avatar}
                     </div>
@@ -372,7 +374,7 @@ export default function Dashboard() {
                 ))
               ) : groups && groups.length > 0 ? (
                 groups.slice(0, 5).map((group, index) => (
-                  <div key={group.id} className="flex items-center justify-between cursor-pointer hover:bg-white/5 rounded-lg p-2 transition-all">
+                  <div key={group.id} className="flex items-center justify-between rounded-lg p-2">
                     <div className="flex items-center space-x-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-r ${getGroupColor(index)}`}>
                         <span className="text-sm">{getGroupIcon(group.name)}</span>
