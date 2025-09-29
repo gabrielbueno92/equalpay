@@ -33,6 +33,15 @@ export default function Expenses() {
   const processedExpenses = expensesData?.map(expense => {
     const userSplit = expense.splits.find(split => split.userId === user?.id)
     const date = new Date(expense.expenseDate)
+    const userPaidThisExpense = expense.payer?.id === user?.id
+    const userShare = userSplit?.amountOwed || 0
+    
+    // Calculate net balance for this expense
+    // If user paid: amount paid - user's share = net contribution
+    // If user didn't pay: just the amount they owe
+    const yourNetBalance = userPaidThisExpense ? 
+      (expense.amount - userShare) : 
+      (-userShare)
     
     return {
       id: expense.id,
@@ -48,7 +57,9 @@ export default function Expenses() {
       participants: expense.participants?.map(participant => 
         participant.id === user?.id ? 'You' : participant.name
       ) || [],
-      yourShare: userSplit?.amountOwed || 0,
+      yourShare: userShare,
+      yourNetBalance: yourNetBalance,
+      userPaidThis: userPaidThisExpense,
       receipt: false, // This would need to be added to the backend model if needed
       status: 'pending' // Backend doesn't track payment status yet
     }
@@ -90,7 +101,7 @@ export default function Expenses() {
   }
 
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const yourTotal = filteredExpenses.reduce((sum, expense) => sum + expense.yourShare, 0)
+  const yourTotal = filteredExpenses.reduce((sum, expense) => sum + expense.yourNetBalance, 0)
 
   const handleEditExpense = (expense: any) => {
     // Find the original expense data from the backend response
@@ -194,8 +205,12 @@ export default function Expenses() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm font-medium mb-1">Your Total</p>
-                  <p className="text-3xl font-black text-white">${yourTotal.toFixed(2)}</p>
+                  <p className="text-gray-400 text-sm font-medium mb-1">Your Net Balance</p>
+                  <p className={`text-3xl font-black ${
+                    yourTotal >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {yourTotal >= 0 ? '+' : ''}${yourTotal.toFixed(2)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -408,7 +423,14 @@ export default function Expenses() {
               <div className="flex items-start space-x-4">
                 <div className="text-right">
                   <div className="text-2xl font-black text-white mb-1">${expense.amount.toFixed(2)}</div>
-                  <div className="text-sm text-gray-400 mb-2">Your share: ${expense.yourShare.toFixed(2)}</div>
+                  {expense.userPaidThis ? (
+                    <div className="text-sm mb-2">
+                      <div className="text-gray-400">Your share: ${expense.yourShare.toFixed(2)}</div>
+                      <div className="text-emerald-400 font-medium">Net +${expense.yourNetBalance.toFixed(2)}</div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-400 mb-2">You owe: ${expense.yourShare.toFixed(2)}</div>
+                  )}
                   <div className={`text-xs font-medium ${
                     expense.paidBy === 'You' 
                       ? 'text-emerald-400 flex items-center space-x-1' 
